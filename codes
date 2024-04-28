@@ -1,0 +1,3817 @@
+******************* Variable construction ***************
+* sex
+gen Female=hgsex==2
+gen Male=hgsex==1
+
+* household structure
+gen HH_struc2=.
+replace HH_struc2=1 if HH_structure==1
+replace HH_struc2=2 if HH_structure>=2
+replace HH_struc2=3 if HH_structure>=5
+replace HH_struc2=5 if HH_structure>=8
+replace HH_struc2=4 if HH_structure==9
+
+label define HHstruc2lab 1 "couple no children" 2 "couple with children" 3 "lone parent with children" 4 "Lone person" 5 "Other", modify
+label values HH_struc2 HHstruc2lab 
+
+* owner
+gen owner=tenure2==1|tenure2==2
+
+* age
+gen AgeC4=1 if Age<35
+replace AgeC4=2 if Age>=35 & Age<50
+replace AgeC4=3 if Age>=50 & Age<65
+replace AgeC4=4 if Age>=65
+
+* housing quality
+gen home_satisfaction_dis=1 if losathl>=0& losathl<=6
+replace home_satisfaction_dis=0 if losathl>=7& losathl<=10
+
+* OECD equivalising factor
+gen hhchild = hh0_4 + hh5_9 + hh10_14
+gen firstadult=1 if hhadult>0 & hhadult~=.
+gen adadult=hhadult-1 if hhadult>1
+recode adadult (.=0) if hhadult~=.
+gen equiv=(hhchild*0.3)+(firstadult*1)+(adadult*0.5)
+
+* equivalised income
+recode hifdip -10/-1=.
+recode hifdin -10/-1=.
+gen eqincome=(hifdip-hifdin)/equiv
+
+* equivalence scale for fuel costs
+gen equiv_fuel=1.15 if HH_struc2==2
+replace equiv_fuel=1 if HH_struc2==1
+replace equiv_fuel=0.94 if HH_struc2==3
+replace equiv_fuel=0.82 if HH_struc2==4
+replace equiv_fuel=1.07 if HH_struc2==5
+
+* equivalised fuel costs
+gen bills_fuel=hxyutli if hxyutli>=0&hxyutil!=.
+gen bills_fuel_eq=bills_fuel/equiv_fuel
+
+* % energy expense
+gen propfuelpay_eq= (bills_fuel_eq/eqincome)*100
+replace propfuelpay_eq=100 if propfuelpay_eq>100
+replace propfuelpay_eq=0 if propfuelpay_eq<0
+replace propfuelpay_eq=. if hxyutli==.|eqincome==.
+lab var propfuelpay_eq "Proportion of income spent on fuel" 
+
+gen propfuelpay_eq_p=propfuelpay_eq/100
+
+* >10% energy expense
+gen fuel10_eq=.
+replace fuel10_eq=1 if propfuelpay_eq>10 & propfuelpay_eq!=.
+replace fuel10_eq=0 if propfuelpay_eq<=10 & propfuelpay_eq!=.
+label variable fuel10_eq "indicator of fuel costs >10% income"
+
+* LIHC
+gen AHC= hifdip-hifdin-housing_cost_annual
+gen AHC_eq=AHC/equiv
+bysort year: egen AHC_eq_median=median(AHC_eq) 
+gen AHC_eq_median_60=AHC_eq_median*0.6
+gen AHC_eq_median_60_fuel=AHC_eq_median_60+bills_fuel_eq
+
+gen fuel_poor_lihc1=AHC_eq <AHC_eq_median_60_fuel
+replace fuel_poor_lihc1=. if AHC_eq==.
+
+bysort year: egen bills_fuel_eq_median=median(bills_fuel_eq) 
+
+gen fuel_poor_lihc2=bills_fuel_eq>bills_fuel_eq_median
+replace fuel_poor_lihc2=. if bills_fuel_eq==.
+
+gen fuel_poor_lihc= fuel_poor_lihc1==1&fuel_poor_lihc2==1
+replace fuel_poor_lihc=. if fuel_poor_lihc1==.|fuel_poor_lihc2==.
+
+drop fuel_poor_lihc1 fuel_poor_lihc2
+
+* unable heat home due to a shortage of money
+gen difheat= fiprbuh
+replace difheat= fipruh if difheat==.
+recode difheat -10/-4=. 2=0
+label define l 0"No" 1"Yes"
+label values difheat l
+label var difheat "Unable to heat home"
+
+* greenspace
+gen PROP_AREA_PARKLAND_cat=1 if PROP_AREA_PARKLAND_sa2<=0.1
+replace PROP_AREA_PARKLAND_cat=2 if PROP_AREA_PARKLAND_sa2>0.1&PROP_AREA_PARKLAND_sa2<=0.4
+replace PROP_AREA_PARKLAND_cat=3 if PROP_AREA_PARKLAND_sa2>0.4&PROP_AREA_PARKLAND_sa2!=.	
+
+* renewable units
+gen renewable_area_rate_cat=1 if renewable_area_rate>=0&renewable_area_rate<=0.01
+replace renewable_area_rate_cat=2 if renewable_area_rate>0.01&renewable_area_rate<=0.4
+replace renewable_area_rate_cat=3 if renewable_area_rate>0.4&renewable_area_rate!=.
+
+// weather station based temperature data can be downloaded from BOM ACORN-SAT website with definitions of extreme heat and cold described in the technical report by Nairn and Fawcett (https://www.cawcr.gov.au/technical-reports/CTR_060.pdf)
+merge n:1 lga_code year using "BOM_measures.dta", nogen
+
+save "energy_poverty.dta", replace
+
+
+
+
+
+************************ multivariate FPs - figures *************************
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): regress propfuelpay_eq_p  min_temp max_temp , vce (cluster ID)
+fracgen max_temp 1
+fracgen min_temp 3 3
+regress propfuelpay_eq_p max_temp min_te_1 min_te_2 c.max_temp#c.(min_te_1 min_te_2) year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2) , at1(22(2)36) at2(3(3)9) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 max_temp, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 max_temp , color(gray%30) ) ///
+		(line _margin2 max_temp, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 max_temp , color(gray%30) ) ///
+		(line _margin3 max_temp, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 max_temp , color(gray%30) ) , ///
+		saving(max_temp1.gph, replace)
+		
+
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit fuel10_eq  min_temp max_temp , vce (cluster ID)
+fracgen max_temp 1
+fracgen min_temp 3 3
+logit fuel10_eq max_temp min_te_1 min_te_2 c.annual_max_temp#c.(min_te_1 min_te_2) year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2) , at1(22(2)36) at2(3(3)9) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 max_temp, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 max_temp , color(gray%30) ) ///
+		(line _margin2 max_temp, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 max_temp , color(gray%30) ) ///
+		(line _margin3 max_temp, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 max_temp , color(gray%30) ) , ///
+		saving(max_temp2.gph, replace)		
+		
+		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit fuel_poor_lihc  min_temp max_temp , vce (cluster ID)
+fracgen max_temp -1 -1
+fracgen min_temp 0 0
+logit fuel_poor_lihc max_te_1 max_te_2 min_te_1 min_te_2 c.(max_te_1 max_te_2)#c.(min_te_1 min_te_2)  year_2-year_17 , vce (cluster ID)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2) ,  at1(22(2)36) at2(3(3)9) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 max_temp, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 max_temp , color(gray%30) ) ///
+		(line _margin2 max_temp, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 max_temp , color(gray%30) ) ///
+		(line _margin3 max_temp, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 max_temp , color(gray%30) ) , ///
+		saving(max_temp3.gph, replace)
+		
+		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit bills_unable  min_temp max_temp , vce (cluster ID)
+fracgen max_temp -.5 -.5
+fracgen min_temp 1
+logit bills_unable max_te_1 max_te_2 min_temp c.(max_te_1 max_te_2)#c.min_temp year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp , at1(22(2)36) at2(3(3)9) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 max_temp, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 max_temp , color(gray%30) ) ///
+		(line _margin2 max_temp, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 max_temp , color(gray%30) ) ///
+		(line _margin3 max_temp, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 max_temp , color(gray%30) ) , ///
+		saving(max_temp4.gph, replace)
+		
+		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(24 27 30) against(min_temp) linadj(year_2-year_17): regress propfuelpay_eq_p max_temp min_temp  , vce (cluster ID)
+fracgen max_temp 1
+fracgen min_temp 3 3
+regress propfuelpay_eq_p max_temp min_te_1 min_te_2 c.max_temp#c.(min_te_1 min_te_2)  year_2-year_17 , vce (cluster ID)
+marginscontplot min_temp (min_te_1 min_te_2) max_temp , at1(5(2)19) at2(24(3)30) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 min_temp, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 min_temp , color(gray%30) ) ///
+		(line _margin2 min_temp, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 min_temp , color(gray%30) ) ///
+		(line _margin3 min_temp, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 min_temp , color(gray%30) ) , ///
+		saving(min_temp1.gph, replace)
+		
+		
+		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(24 27 30) against(min_temp) linadj(year_2-year_17): logit fuel10_eq  max_temp min_temp , vce (cluster ID)
+fracgen max_temp 1
+fracgen min_temp 3 3
+logit fuel10_eq max_temp min_te_1 min_te_2 c.max_temp#c.(min_te_1 min_te_2) year_2-year_17  , vce (cluster ID)
+marginscontplot min_temp (min_te_1 min_te_2) max_temp , at1(5(2)19) at2(24(3)30) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 min_temp, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 min_temp , color(gray%30) ) ///
+		(line _margin2 min_temp, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 min_temp , color(gray%30) ) ///
+		(line _margin3 min_temp, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 min_temp , color(gray%30) ) , ///
+		saving(min_temp2.gph, replace)
+		
+
+use "energy_poverty.dta", clear
+//mfpigen, fplot(24 27 30) against(min_temp) linadj(year_2-year_17): logit fuel_poor_lihc  max_temp min_temp , vce (cluster ID)
+fracgen max_temp -1 -1
+fracgen min_temp 0 0
+logit fuel_poor_lihc max_te_1 max_te_2 min_te_1 min_te_2 c.(max_te_1 max_te_2)#c.(min_te_1 min_te_2) year_2-year_17  , vce (cluster ID)
+marginscontplot min_temp (min_te_1 min_te_2) max_temp (max_te_1 max_te_2), at1(5(2)19) at2(24(3)30) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 min_temp, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 min_temp , color(gray%30) ) ///
+		(line _margin2 min_temp, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 min_temp , color(gray%30) ) ///
+		(line _margin3 min_temp, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 min_temp , color(gray%30) ) , ///
+		saving(min_temp3.gph, replace)
+		
+		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(24 27 30) against(min_temp) linadj(year_2-year_17): logit bills_unable  max_temp min_temp , vce (cluster ID)
+fracgen max_temp -.5 -.5
+fracgen min_temp 1
+logit bills_unable max_te_1 max_te_2 min_temp c.(max_te_1 max_te_2)#c.min_temp year_2-year_17  , vce (cluster ID)
+marginscontplot min_temp max_temp (max_te_1 max_te_2) , at1(5(2)19) at2(24(3)30) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 min_temp, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 min_temp , color(gray%30) ) ///
+		(line _margin2 min_temp, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 min_temp , color(gray%30) ) ///
+		(line _margin3 min_temp, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 min_temp , color(gray%30) ) , ///
+		saving(min_temp4.gph, replace)
+
+
+
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 5 7) against(HWD_mean) linadj(year_2-year_17): regress propfuelpay_eq_p CWD_mean HWD_mean if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+fracgen HWD_mean 1
+fracgen CWD_mean 3 3
+regress propfuelpay_eq_p HWD_mean CWD_me_1 CWD_me_2 c.HWD_mean#c.(CWD_me_1 CWD_me_2) year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2) , at1(3(1)7) at2(3(2)7) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 HWD_mean, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 HWD_mean , color(gray%30) ) ///
+		(line _margin2 HWD_mean, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 HWD_mean , color(gray%30) ) ///
+		(line _margin3 HWD_mean, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 HWD_mean , color(gray%30) ) , ///
+		saving(HWD_mean1.gph, replace)
+		
+
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 5 7) against(HWD_mean) linadj(year_2-year_17): logit fuel10_eq  CWD_mean HWD_mean if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+fracgen HWD_mean 2 3
+fracgen CWD_mean 3 3
+logit fuel10_eq HWD_me_1 HWD_me_2 CWD_me_1 CWD_me_2 c.(HWD_me_1 HWD_me_2)#c.(CWD_me_1 CWD_me_2) year_2-year_17, vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2) , at1(3(1)7) at2(3(2)7) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 HWD_mean, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 HWD_mean , color(gray%30) ) ///
+		(line _margin2 HWD_mean, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 HWD_mean , color(gray%30) ) ///
+		(line _margin3 HWD_mean, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 HWD_mean , color(gray%30) ) , ///
+		saving(HWD_mean2.gph, replace)
+		
+			
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 5 7) against(HWD_mean) linadj(year_2-year_17): logit fuel_poor_lihc  CWD_mean HWD_mean if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+fracgen HWD_mean 2 2
+fracgen CWD_mean 1
+logit fuel_poor_lihc HWD_me_1 HWD_me_2 CWD_mean c.(HWD_me_1 HWD_me_2)#c.CWD_mean year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean ,  at1(3(1)7) at2(3(2)7) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 HWD_mean, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 HWD_mean , color(gray%30) ) ///
+		(line _margin2 HWD_mean, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 HWD_mean , color(gray%30) ) ///
+		(line _margin3 HWD_mean, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 HWD_mean , color(gray%30) ) , ///
+		saving(HWD_mean3.gph, replace)
+		
+		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 5 7) against(HWD_mean) linadj(year_2-year_17): logit bills_unable  CWD_mean HWD_mean if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+fracgen HWD_mean 1
+fracgen CWD_mean -2
+logit bills_unable HWD_mean CWD_me_1 c.(HWD_mean)#c.CWD_me_1  year_2-year_17 , vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1), at1(3(1)7) at2(3(2)7) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 HWD_mean, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 HWD_mean , color(gray%30) ) ///
+		(line _margin2 HWD_mean, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 HWD_mean , color(gray%30) ) ///
+		(line _margin3 HWD_mean, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 HWD_mean , color(gray%30) ) , ///
+		saving(HWD_mean4.gph, replace)
+		
+		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 5 7) against(CWD_mean) linadj(year_2-year_17): regress propfuelpay_eq_p HWD_mean CWD_mean  if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+fracgen HWD_mean 1
+fracgen CWD_mean 3 3
+regress propfuelpay_eq_p HWD_mean CWD_me_1 CWD_me_2 c.HWD_mean#c.(CWD_me_1 CWD_me_2)  year_2-year_17  , vce (cluster ID)
+marginscontplot CWD_mean (CWD_me_1 CWD_me_2) HWD_mean , at1(3(1)7) at2(3(2)7) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 CWD_mean, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 CWD_mean , color(gray%30) ) ///
+		(line _margin2 CWD_mean, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 CWD_mean , color(gray%30) ) ///
+		(line _margin3 CWD_mean, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 CWD_mean , color(gray%30) ) , ///
+		saving(CWD_mean1.gph, replace)
+		
+		
+		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 5 7) against(CWD_mean) linadj(year_2-year_17): logit fuel10_eq  HWD_mean CWD_mean if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+fracgen HWD_mean 2 3 
+fracgen CWD_mean 3 3
+logit fuel10_eq HWD_me_1 HWD_me_2 CWD_me_1 CWD_me_2 c.(HWD_me_1 HWD_me_2)#c.(CWD_me_1 CWD_me_2) year_2-year_17 , vce (cluster ID)
+marginscontplot CWD_mean (CWD_me_1 CWD_me_2)  HWD_mean (HWD_me_1 HWD_me_2), at1(3(1)7) at2(3(2)7) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 CWD_mean, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 CWD_mean , color(gray%30) ) ///
+		(line _margin2 CWD_mean, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 CWD_mean , color(gray%30) ) ///
+		(line _margin3 CWD_mean, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 CWD_mean , color(gray%30) ) , ///
+		saving(CWD_mean2.gph, replace)
+		
+
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 5 7) against(CWD_mean) linadj(year_2-year_17): logit fuel_poor_lihc  HWD_mean CWD_mean if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+fracgen HWD_mean 2 2
+fracgen CWD_mean 1
+logit fuel_poor_lihc HWD_me_1 HWD_me_2 CWD_mean c.(HWD_me_1 HWD_me_2)#c.CWD_mean year_2-year_17  , vce (cluster ID)
+marginscontplot CWD_mean HWD_mean (HWD_me_1 HWD_me_2) ,  at1(3(1)7) at2(3(2)7) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 CWD_mean, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 CWD_mean , color(gray%30) ) ///
+		(line _margin2 CWD_mean, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 CWD_mean , color(gray%30) ) ///
+		(line _margin3 CWD_mean, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 CWD_mean , color(gray%30) ) , ///
+		saving(CWD_mean3.gph, replace)
+		
+		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 5 7) against(CWD_mean) linadj(year_2-year_17): logit bills_unable  HWD_mean CWD_mean if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+fracgen HWD_mean 1
+fracgen CWD_mean -2
+logit bills_unable HWD_mean CWD_me_1 c.(HWD_mean)#c.CWD_me_1  year_2-year_17, vce (cluster ID)
+marginscontplot CWD_mean (CWD_me_1) HWD_mean, at1(3(1)7) at2(3(2)7) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 CWD_mean, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 CWD_mean , color(gray%30) ) ///
+		(line _margin2 CWD_mean, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 CWD_mean , color(gray%30) ) ///
+		(line _margin3 CWD_mean, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 CWD_mean , color(gray%30) ) , ///
+		saving(CWD_mean4.gph, replace)
+		
+				
+		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(0 2 4) against(HWN) linadj(year_2-year_17): regress propfuelpay_eq_p CWN HWN , vce (cluster ID)
+fracgen HWN 2 2
+fracgen CWN 1
+regress propfuelpay_eq_p HWN_1 HWN_2 CWN c.(HWN_1 HWN_2)#c.CWN year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(2(1)4) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 HWN, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 HWN , color(gray%30) ) ///
+		(line _margin2 HWN, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 HWN , color(gray%30) ) ///
+		(line _margin3 HWN, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 HWN , color(gray%30) ) , ///
+		saving(HWN1.gph, replace)
+		
+
+use "energy_poverty.dta", clear
+//mfpigen, fplot(0 2 4) against(HWN) linadj(year_2-year_17): logit fuel10_eq CWN   HWN, vce (cluster ID)
+fracgen HWN 2 2
+fracgen CWN 1
+logit fuel10_eq HWN_1 HWN_2 CWN c.(HWN_1 HWN_2)#c.CWN year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(2(1)4) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 HWN, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 HWN , color(gray%30) ) ///
+		(line _margin2 HWN, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 HWN , color(gray%30) ) ///
+		(line _margin3 HWN, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 HWN , color(gray%30) ) , ///
+		saving(HWN2.gph, replace)
+			
+		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(0 2 4) against(HWN) linadj(year_2-year_17): logit fuel_poor_lihc  CWN  HWN, vce (cluster ID)
+fracgen HWN 2 2
+fracgen CWN 1
+logit fuel_poor_lihc HWN_1 HWN_2 CWN c.(HWN_1 HWN_2)#c.CWN year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(2(1)4) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 HWN, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 HWN , color(gray%30) ) ///
+		(line _margin2 HWN, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 HWN , color(gray%30) ) ///
+		(line _margin3 HWN, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 HWN , color(gray%30) ) , ///
+		saving(HWN3.gph, replace)
+	
+	
+use "energy_poverty.dta", clear
+//mfpigen, fplot(0 2 4) against(HWN) linadj(year_2-year_17): logit bills_unable  CWN HWN , vce (cluster ID)
+fracgen HWN 2 3
+fracgen CWN 3 3
+logit bills_unable HWN_1 HWN_2 CWN_1 CWN_2 c.(HWN_1 HWN_2)#c.(CWN_1 CWN_2)  year_2-year_17 , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2), at1(0(1)4) at2(2(1)4) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 HWN, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 HWN , color(gray%30) ) ///
+		(line _margin2 HWN, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 HWN , color(gray%30) ) ///
+		(line _margin3 HWN, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 HWN , color(gray%30) ) , ///
+		saving(HWN4.gph, replace)
+		
+		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(0 2 4) against(CWN) linadj(year_2-year_17): regress propfuelpay_eq_p HWN CWN , vce (cluster ID)
+fracgen HWN 2 2
+fracgen CWN 1
+regress propfuelpay_eq_p HWN_1 HWN_2 CWN c.(HWN_1 HWN_2)#c.CWN  year_2-year_17  , vce (cluster ID)
+marginscontplot CWN  HWN (HWN_1 HWN_2), at1(0(1)4) at2(2(1)4) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 CWN, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 CWN , color(gray%30) ) ///
+		(line _margin2 CWN, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 CWN , color(gray%30) ) ///
+		(line _margin3 CWN, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 CWN , color(gray%30) ) , ///
+		saving(CWN1.gph, replace)
+		
+		
+		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(0 2 4) against(CWN) linadj(year_2-year_17): logit fuel10_eq  HWN CWN , vce (cluster ID)
+fracgen HWN 2 2 
+fracgen CWN 1
+logit fuel10_eq HWN_1 HWN_2 CWN c.(HWN_1 HWN_2)#c.CWN year_2-year_17 , vce (cluster ID)
+marginscontplot CWN  HWN (HWN_1 HWN_2), at1(0(1)4) at2(2(1)4) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 CWN, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 CWN , color(gray%30) ) ///
+		(line _margin2 CWN, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 CWN , color(gray%30) ) ///
+		(line _margin3 CWN, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 CWN , color(gray%30) ) , ///
+		saving(CWN2.gph, replace)
+		
+
+use "energy_poverty.dta", clear
+//mfpigen, fplot(0 2 4) against(CWN) linadj(year_2-year_17): logit fuel_poor_lihc  HWN CWN , vce (cluster ID)
+fracgen HWN 2 2
+fracgen CWN 1
+logit fuel_poor_lihc HWN_1 HWN_2 CWN c.(HWN_1 HWN_2)#c.CWN year_2-year_17  , vce (cluster ID)
+marginscontplot CWN HWN (HWN_1 HWN_2) ,  at1(0(1)4) at2(2(1)4) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 CWN, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 CWN , color(gray%30) ) ///
+		(line _margin2 CWN, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 CWN , color(gray%30) ) ///
+		(line _margin3 CWN, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 CWN , color(gray%30) ) , ///
+		saving(CWN3.gph, replace)
+
+		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(0 2 4) against(CWN) linadj(year_2-year_17): logit bills_unable  HWN CWN , vce (cluster ID)
+fracgen HWN 2 3 
+fracgen CWN 3 3
+logit bills_unable HWN_1 HWN_2 CWN_1 CWN_2 c.(HWN_1 HWN_2)#c.(CWN_1 CWN_2)  year_2-year_17 , vce (cluster ID)
+marginscontplot CWN (CWN_1 CWN_2) HWN (HWN_1 HWN_2), at1(0(1)4) at2(2(1)4) ci saving(g1, replace)
+use "g1.dta", clear
+twoway  (line _margin1 CWN, lcolor(black) lwidth(medthick) lpattern("_") ) (rarea _ci_lb1 _ci_ub1 CWN , color(gray%30) ) ///
+		(line _margin2 CWN, lcolor(black) lwidth(medthick) lpattern("--") ) (rarea _ci_lb2 _ci_ub2 CWN , color(gray%30) ) ///
+		(line _margin3 CWN, lcolor(black) lwidth(medthick) lpattern("-.") ) (rarea _ci_lb3 _ci_ub3 CWN , color(gray%30) ) , ///
+		saving(CWN4.gph, replace)
+		
+
+
+
+
+
+
+*********** multivariate FPs - tables *************
+use "energy_poverty.dta", clear
+//mfpigen, against(max_temp) linadj(year_2-year_17): regress propfuelpay_eq_p  min_temp max_temp , vce (cluster ID)
+fgen max_temp_1=max_temp-23.3842633
+fgen min_temp_1=(min_temp/10)^3-2.075045069
+fgen min_temp_2=(min_temp/10)^3*ln(min_temp/10)-.5049157875 
+
+regress propfuelpay_eq_p c.(max_temp_1)##c.(min_temp_1 min_temp_2) o.max_temp o.min_temp year_2-year_17  , vce (cluster ID)
+f_able max_temp_1 min_temp_1 min_temp_2, auto
+margins, dydx(max_temp) at(min_temp=(3 6 9)) post 
+est sto model1
+		
+regress propfuelpay_eq_p c.(max_temp_1)##c.(min_temp_1 min_temp_2) o.max_temp o.min_temp year_2-year_17  , vce (cluster ID)
+f_able max_temp_1 min_temp_1 min_temp_2, auto
+margins, dydx(min_temp) at(max_temp=(24 27 30)) post 
+est sto model5
+
+
+use "energy_poverty.dta", clear
+//mfpigen, against(max_temp) linadj(year_2-year_17): logit fuel10_eq  min_temp max_temp , vce (cluster ID)
+fgen max_temp_1=max_temp-23.3842633
+fgen min_temp_1=(min_temp/10)^3-2.075045069
+fgen min_temp_2=(min_temp/10)^3*ln(min_temp/10)-.5049157875 
+
+logit fuel10_eq c.(max_temp_1)##c.(min_temp_1 min_temp_2) o.max_temp o.min_temp year_2-year_17  , vce (cluster ID)
+f_able max_temp_1 min_temp_1 min_temp_2, auto
+margins, dydx(max_temp) at(min_temp=(3 6 9)) post
+est sto model2		
+
+logit fuel10_eq c.(max_temp_1)##c.(min_temp_1 min_temp_2) o.max_temp o.min_temp year_2-year_17  , vce (cluster ID)
+f_able max_temp_1 min_temp_1 min_temp_2, auto
+margins, dydx(min_temp) at(max_temp=(24 27 30)) post 
+est sto model6
+		
+		
+use "energy_poverty.dta", clear
+//mfpigen, against(max_temp) linadj(year_2-year_17): logit fuel_poor_lihc  min_temp max_temp , vce (cluster ID)
+fgen max_temp_1=(max_temp/10)^-1-.427662763
+fgen max_temp_2=(max_temp/10)^-1*ln(max_temp/10)-.3632654457
+fgen min_temp_1=ln(min_temp/10)-.2430375762
+fgen min_temp_2=ln(min_temp/10)^2-.0590672634
+
+logit fuel_poor_lihc c.(max_temp_1 max_temp_2)##c.(min_temp_1 min_temp_2) o.max_temp o.min_temp year_2-year_17  , vce (cluster ID)
+f_able max_temp_1 max_temp_2 min_temp_1 min_temp_2, auto
+margins, dydx(max_temp) at(min_temp=(3 6 9)) post
+est sto model3		
+
+logit fuel_poor_lihc c.(max_temp_1 max_temp_2)##c.(min_temp_1 min_temp_2) o.max_temp o.min_temp year_2-year_17  , vce (cluster ID)
+f_able max_temp_1 max_temp_2 min_temp_1 min_temp_2, auto
+margins, dydx(min_temp) at(max_temp=(24 27 30)) post 
+est sto model7
+		
+		
+use "energy_poverty.dta", clear
+//mfpigen,  against(max_temp) linadj(year_2-year_17): logit bills_unable  min_temp max_temp , vce (cluster ID)
+fgen max_temp_1=(max_temp/10)^-.5-.6540476777
+fgen max_temp_2=(max_temp/10)^-.5*ln(max_temp/10)-.5553846228
+fgen min_temp_1=min_temp-12.75005795
+
+logit bills_unable c.(min_temp_1)##c.(max_temp_1 max_temp_2) o.max_temp o.min_temp year_2-year_17  , vce (cluster ID)
+f_able min_temp_1 max_temp_1 max_temp_2, auto
+margins, dydx(max_temp) at(min_temp=(3 6 9)) post
+est sto model4		
+
+logit bills_unable c.(min_temp_1)##c.(max_temp_1 max_temp_2) o.max_temp o.min_temp year_2-year_17  , vce (cluster ID)
+f_able min_temp_1 max_temp_1 max_temp_2, auto
+margins, dydx(min_temp) at(max_temp=(24 27 30)) post 
+est sto model8
+		
+			
+use "energy_poverty.dta", clear
+//mfpigen, against(HWD_mean) linadj(year_2-year_17): regress propfuelpay_eq_p CWD_mean HWD_mean if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+fgen HWD_mean_1= HWD_mean-4.475415233
+fgen CWD_mean_1= (CWD_mean/10)^3-.0816736631
+fgen CWD_mean_2= (CWD_mean/10)^3*ln(CWD_mean/10)+.0681981537
+
+regress propfuelpay_eq_p c.HWD_mean_1##c.(CWD_mean_1 CWD_mean_2) o.CWD_mean o.HWD_mean year_2-year_17  , vce (cluster ID)
+f_able HWD_mean_1 CWD_mean_1 CWD_mean_2, auto
+margins, dydx(HWD_mean) at(CWD_mean=(5 6 7)) post 
+est sto model11
+
+regress propfuelpay_eq_p c.HWD_mean_1##c.(CWD_mean_1 CWD_mean_2) o.CWD_mean o.HWD_mean year_2-year_17  , vce (cluster ID)
+f_able HWD_mean_1 CWD_mean_1 CWD_mean_2, auto
+margins, dydx(CWD_mean) at(HWD_mean=(5 6 7)) post 
+est sto model15
+		
+
+use "energy_poverty.dta", clear
+//mfpigen, against(HWD_mean) linadj(year_2-year_17): logit fuel10_eq  CWD_mean HWD_mean if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+fgen HWD_mean_1=(HWD_mean/10)^2-.2002934151
+fgen HWD_mean_2=(HWD_mean/10)^3-.0896396201
+fgen CWD_mean_1=(CWD_mean/10)^3-.0816736631
+fgen CWD_mean_2=(CWD_mean/10)^3*ln(CWD_mean/10)+.0681981537
+
+logit fuel10_eq c.(HWD_mean_1 HWD_mean_2)##c.(CWD_mean_1 CWD_mean_2) o.CWD_mean o.HWD_mean year_2-year_17 , vce (cluster ID)
+f_able HWD_mean_1 HWD_mean_2 CWD_mean_1 CWD_mean_2, auto
+margins, dydx(HWD_mean) at(CWD_mean=(5 6 7)) post 
+est sto model12
+	
+logit fuel10_eq c.(HWD_mean_1 HWD_mean_2)##c.(CWD_mean_1 CWD_mean_2) o.CWD_mean o.HWD_mean year_2-year_17 , vce (cluster ID)
+f_able HWD_mean_1 HWD_mean_2 CWD_mean_1 CWD_mean_2, auto
+margins, dydx(CWD_mean) at(HWD_mean=(5 6 7)) post 
+est sto model16	
+			
+		
+use "energy_poverty.dta", clear
+//mfpigen,  against(HWD_mean) linadj(year_2-year_17): logit fuel_poor_lihc  CWD_mean HWD_mean if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+fgen HWD_mean_1=(HWD_mean/10)^2-.2002713645
+fgen HWD_mean_2=(HWD_mean/10)^2*ln(HWD_mean/10)+.1610263892
+fgen CWD_mean_1=CWD_mean-4.340266971
+
+logit fuel_poor_lihc c.(HWD_mean_1 HWD_mean_2)#c.CWD_mean_1 o.CWD_mean o.HWD_mean year_2-year_17  , vce (cluster ID)
+f_able HWD_mean_1 HWD_mean_2 CWD_mean_1 , auto
+margins, dydx(HWD_mean) at(CWD_mean=(5 6 7)) post 
+est sto model13
+
+logit fuel_poor_lihc c.(HWD_mean_1 HWD_mean_2)#c.CWD_mean_1 o.CWD_mean o.HWD_mean year_2-year_17  , vce (cluster ID)
+f_able HWD_mean_1 HWD_mean_2 CWD_mean_1 , auto
+margins, dydx(CWD_mean) at(HWD_mean=(5 6 7)) post 
+est sto model17
+
+		
+use "energy_poverty.dta", clear
+//mfpigen, against(HWD_mean) linadj(year_2-year_17): logit bills_unable  CWD_mean HWD_mean if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+fgen HWD_mean_1= HWD_mean-4.479416096
+fgen CWD_mean_1= (CWD_mean/10)^-2-5.3384903
+
+logit bills_unable c.(HWD_mean_1)##c.CWD_mean_1  o.CWD_mean o.HWD_mean year_2-year_17, vce (cluster ID)
+f_able HWD_mean_1 CWD_mean_1 , auto
+margins, dydx(HWD_mean) at(CWD_mean=(5 6 7)) post 
+est sto model14
+
+logit bills_unable c.(HWD_mean_1)##c.CWD_mean_1 o.CWD_mean o.HWD_mean year_2-year_17, vce (cluster ID)
+f_able HWD_mean_1 CWD_mean_1 , auto
+margins, dydx(CWD_mean) at(HWD_mean=(5 6 7)) post 
+est sto model18				
+				
+	
+use "energy_poverty.dta", clear
+//mfpigen, against(HWN) linadj(year_2-year_17): regress propfuelpay_eq_p CWN HWN , vce (cluster ID)
+fgen HWN_1= (HWN+.5)^2-7.632897765
+fgen HWN_2= (HWN+.5)^2*ln(HWN+.5)-7.756808544 
+fgen CWN_1= CWN-1.810595547
+
+regress propfuelpay_eq_p c.(HWN_1 HWN_2)##c.CWN_1 o.CWN o.HWN year_2-year_17  , vce (cluster ID)
+f_able CWN_1 HWN_1 HWN_2, auto
+margins, dydx(HWN) at(CWN=(2 3 4)) post 
+est sto model21
+
+regress propfuelpay_eq_p c.(HWN_1 HWN_2)##c.CWN_1  o.CWN o.HWN year_2-year_17  , vce (cluster ID)
+f_able CWN_1 HWN_1 HWN_2, auto
+margins, dydx(CWN) at(HWN=(2 3 4)) post 
+est sto model25
+		
+
+use "energy_poverty.dta", clear
+//mfpigen, against(HWN) linadj(year_2-year_17): logit fuel10_eq CWN   HWN, vce (cluster ID)
+fgen HWN_1= (HWN+.5)^2-7.632897765
+fgen HWN_2= (HWN+.5)^2*ln(HWN+.5)-7.756808544
+fgen CWN_1= CWN-1.810595547
+
+logit fuel10_eq c.(HWN_1 HWN_2)##c.CWN_1 o.CWN o.HWN year_2-year_17  , vce (cluster ID)
+f_able CWN_1 HWN_1 HWN_2, auto
+margins, dydx(HWN) at(CWN=(2 3 4)) post 
+est sto model22
+
+logit fuel10_eq c.(HWN_1 HWN_2)##c.CWN_1  o.CWN o.HWN year_2-year_17  , vce (cluster ID)
+f_able CWN_1 HWN_1 HWN_2, auto
+margins, dydx(CWN) at(HWN=(2 3 4)) post 
+est sto model26
+		
+			
+use "energy_poverty.dta", clear
+//mfpigen, against(HWN) linadj(year_2-year_17): logit fuel_poor_lihc  CWN  HWN, vce (cluster ID)
+fgen HWN_1= (HWN+.5)^2-7.630649529
+fgen HWN_2= (HWN+.5)^2*ln(HWN+.5)-7.753399857
+fgen CWN_1= CWN-1.811249848
+
+logit fuel_poor_lihc c.(HWN_1 HWN_2)##c.CWN_1 o.CWN o.HWN year_2-year_17  , vce (cluster ID)
+f_able CWN_1 HWN_1 HWN_2, auto
+margins, dydx(HWN) at(CWN=(2 3 4)) post 
+est sto model23
+
+logit fuel_poor_lihc c.(HWN_1 HWN_2)##c.CWN_1  o.CWN o.HWN year_2-year_17  , vce (cluster ID)
+f_able CWN_1 HWN_1 HWN_2, auto
+margins, dydx(CWN) at(HWN=(2 3 4)) post 
+est sto model27
+	
+	
+use "energy_poverty.dta", clear
+//mfpigen, against(HWN) linadj(year_2-year_17): logit bills_unable  CWN HWN , vce (cluster ID)
+fgen HWN_1=(HWN+.5)^2-7.675254374
+fgen HWN_2=(HWN+.5)^3-21.26371617
+fgen CWN_1=(CWN+.5)^3-12.19975687
+fgen CWN_2=(CWN+.5)^3*ln(CWN+.5)-10.17222243
+
+logit bills_unable c.(HWN_1 HWN_2)##c.(CWN_1 CWN_2) o.CWN o.HWN year_2-year_17 , vce (cluster ID)
+f_able CWN_1 CWN_2 HWN_1 HWN_2, auto
+margins, dydx(HWN) at(CWN=(2 3 4)) post 
+est sto model24
+		
+logit bills_unable c.(HWN_1 HWN_2)##c.(CWN_1 CWN_2) o.CWN o.HWN year_2-year_17 , vce (cluster ID)
+f_able CWN_1 CWN_2 HWN_1 HWN_2, auto
+margins, dydx(CWN) at(HWN=(2 3 4)) post 
+est sto model28		
+
+
+		
+******************* stratification using heatmap *****************
+use "energy_poverty.dta", clear
+//mfpigen,  linadj(year_2-year_17 ): regress propfuelpay_eq_p  min_temp max_temp , vce (cluster ID)
+fracgen max_temp 1
+fracgen min_temp 3 3
+
+regress propfuelpay_eq_p c.max_temp##c.(min_te_1 min_te_2)##i.NCCClimateZone2 year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(24(2)36) at2(4(2)16) at(NCCClimateZone2==1) ci saving(g1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==2) ci saving(g2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==3) ci saving(g3, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==4) ci saving(g4, replace)
+
+use "g1.dta", clear
+gen NCCClimateZone2=1
+append using  "g2.dta"
+replace NCCClimateZone2=2 if NCCClimateZone2==.
+append using  "g3.dta"
+replace NCCClimateZone2=3 if NCCClimateZone2==.
+append using  "g4.dta"
+replace NCCClimateZone2=4 if NCCClimateZone2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.06) by(NCCClimateZone2) saving("climate1.gph", replace)
+
+
+		
+use "energy_poverty.dta", clear
+//mfpigen,  linadj(year_2-year_17): logit fuel10_eq  min_temp max_temp , vce (cluster ID)
+fracgen max_temp 1
+fracgen min_temp 3 3
+
+logit fuel10_eq c.max_temp##c.(min_te_1 min_te_2)##i.NCCClimateZone2 year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(24(2)36) at2(4(2)16) at(NCCClimateZone2==1) ci saving(a1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==2) ci saving(a2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==3) ci saving(a3, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==4) ci saving(a4, replace)
+
+use "a1.dta", clear
+gen NCCClimateZone2=1
+append using  "a2.dta"
+replace NCCClimateZone2=2 if NCCClimateZone2==.
+append using  "a3.dta"
+replace NCCClimateZone2=3 if NCCClimateZone2==.
+append using  "a4.dta"
+replace NCCClimateZone2=4 if NCCClimateZone2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+		
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(NCCClimateZone2) saving("climate2.gph", replace)
+		
+		
+		
+/// 3		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit fuel_poor_lihc  min_temp max_temp , vce (cluster ID)
+fracgen max_temp -1 -1
+fracgen min_temp 0 0
+
+logit fuel_poor_lihc c.(max_te_1 max_te_2)##c.(min_te_1 min_te_2)##i.NCCClimateZone2 year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(24(2)36) at2(4(2)16) at(NCCClimateZone2==1) ci saving(b1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==2) ci saving(b2, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==3) ci saving(b3, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==4) ci saving(b4, replace)
+
+use "b1.dta", clear
+gen NCCClimateZone2=1
+append using  "b2.dta"
+replace NCCClimateZone2=2 if NCCClimateZone2==.
+append using  "b3.dta"
+replace NCCClimateZone2=3 if NCCClimateZone2==.
+append using  "b4.dta"
+replace NCCClimateZone2=4 if NCCClimateZone2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(NCCClimateZone2) saving("climate3.gph", replace)
+
+		
+/// 4		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit bills_unable  min_temp max_temp , vce (cluster ID)
+fracgen max_temp -.5 -.5
+fracgen min_temp 1
+
+logit bills_unable c.min_temp##c.(max_te_1 max_te_2)##i.NCCClimateZone2 year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(24(2)36) at2(4(2)16) at(NCCClimateZone2==1) ci saving(c1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==2) ci saving(c2, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==3) ci saving(c3, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==4) ci saving(c4, replace)
+
+use "c1.dta", clear
+gen NCCClimateZone2=1
+append using  "c2.dta"
+replace NCCClimateZone2=2 if NCCClimateZone2==.
+append using  "c3.dta"
+replace NCCClimateZone2=3 if NCCClimateZone2==.
+append using  "c4.dta"
+replace NCCClimateZone2=4 if NCCClimateZone2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(NCCClimateZone2) saving("climate4.gph", replace)
+		
+
+
+
+
+
+
+
+
+
+use "energy_poverty.dta", clear
+fracgen HWD_mean 1
+fracgen CWD_mean 3 3
+
+regress propfuelpay_eq_p c.HWD_mean##c.(CWD_me_1 CWD_me_2)##i.NCCClimateZone2 year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(NCCClimateZone2==1) ci saving(d1, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(NCCClimateZone2==2) ci saving(d2, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(NCCClimateZone2==3) ci saving(d3, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(NCCClimateZone2==4) ci saving(d4, replace)
+
+use "d1.dta", clear
+gen NCCClimateZone2=1
+append using  "d2.dta"
+replace NCCClimateZone2=2 if NCCClimateZone2==.
+append using  "d3.dta"
+replace NCCClimateZone2=3 if NCCClimateZone2==.
+append using  "d4.dta"
+replace NCCClimateZone2=4 if NCCClimateZone2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
+replace j=j+2
+rename j CWD_mean
+
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.06) by(NCCClimateZone2) saving("climate5.gph", replace) 
+
+
+		
+/// 6
+use "energy_poverty.dta", clear
+fracgen HWD_mean 2 3
+fracgen CWD_mean 3 3
+
+logit fuel10_eq c.(HWD_me_1 HWD_me_2)##c.(CWD_me_1 CWD_me_2)##i.NCCClimateZone2 year_2-year_17, vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(NCCClimateZone2==1) ci saving(e1, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(NCCClimateZone2==2) ci saving(e2, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(NCCClimateZone2==3) ci saving(e3, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(NCCClimateZone2==4) ci saving(e4, replace)
+
+use "e1.dta", clear
+gen NCCClimateZone2=1
+append using  "e2.dta"
+replace NCCClimateZone2=2 if NCCClimateZone2==.
+append using  "e3.dta"
+replace NCCClimateZone2=3 if NCCClimateZone2==.
+append using  "e4.dta"
+replace NCCClimateZone2=4 if NCCClimateZone2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
+replace j=j+2
+rename j CWD_mean
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.1) by(NCCClimateZone2) saving("climate6.gph", replace) 
+
+		
+/// 7		
+use "energy_poverty.dta", clear
+fracgen HWD_mean 2 2
+fracgen CWD_mean 1
+
+logit fuel_poor_lihc c.(HWD_me_1 HWD_me_2)##c.CWD_mean##i.NCCClimateZone2 year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(NCCClimateZone2==1) ci saving(f1, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(NCCClimateZone2==2) ci saving(f2, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(NCCClimateZone2==3) ci saving(f3, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(NCCClimateZone2==4) ci saving(f4, replace)
+
+
+use "f1.dta", clear
+gen NCCClimateZone2=1
+append using  "f2.dta"
+replace NCCClimateZone2=2 if NCCClimateZone2==.
+append using  "f3.dta"
+replace NCCClimateZone2=3 if NCCClimateZone2==.
+append using  "f4.dta"
+replace NCCClimateZone2=4 if NCCClimateZone2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
+replace j=j+2
+rename j CWD_mean
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate7.gph", replace) 
+
+
+/// 8		
+use "energy_poverty.dta", clear
+fracgen HWD_mean 1
+fracgen CWD_mean -2
+
+logit bills_unable c.(HWD_mean)##c.CWD_me_1##i.NCCClimateZone2  year_2-year_17 if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(NCCClimateZone2==1) ci saving(h1, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(NCCClimateZone2==2) ci saving(h2, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(NCCClimateZone2==3) ci saving(h3, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(NCCClimateZone2==4) ci saving(h4, replace)
+
+use "h1.dta", clear
+gen NCCClimateZone2=1
+append using  "h2.dta"
+replace NCCClimateZone2=2 if NCCClimateZone2==.
+append using  "h3.dta"
+replace NCCClimateZone2=3 if NCCClimateZone2==.
+append using  "h4.dta"
+replace NCCClimateZone2=4 if NCCClimateZone2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
+replace j=j+2
+rename j CWD_mean
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate8.gph", replace) 
+				
+		
+		
+		
+		
+		
+		
+		
+/// 9		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+regress propfuelpay_eq_p c.(HWN_1 HWN_2)##c.CWN##i.NCCClimateZone2 year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(NCCClimateZone2==1) ci saving(l1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(NCCClimateZone2==2) ci saving(l2, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(NCCClimateZone2==3) ci saving(l3, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(NCCClimateZone2==4) ci saving(l4, replace)
+
+use "l1.dta", clear
+gen NCCClimateZone2=1
+append using  "l2.dta"
+replace NCCClimateZone2=2 if NCCClimateZone2==.
+append using  "l3.dta"
+replace NCCClimateZone2=3 if NCCClimateZone2==.
+append using  "l4.dta"
+replace NCCClimateZone2=4 if NCCClimateZone2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+
+rename j CWN
+		
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.05) by(NCCClimateZone2) saving("climate9.gph", replace) 
+
+
+
+/// 10		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+logit fuel10_eq c.(HWN_1 HWN_2)##c.CWN##i.NCCClimateZone2 year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(NCCClimateZone2==1) ci saving(mz1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(NCCClimateZone2==2) ci saving(mz2, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(NCCClimateZone2==3) ci saving(mz3, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(NCCClimateZone2==4) ci saving(mz4, replace)
+
+use "mz1.dta", clear
+gen NCCClimateZone2=1
+append using  "mz2.dta"
+replace NCCClimateZone2=2 if NCCClimateZone2==.
+append using  "mz3.dta"
+replace NCCClimateZone2=3 if NCCClimateZone2==.
+append using  "mz4.dta"
+replace NCCClimateZone2=4 if NCCClimateZone2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+		
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.12) by(NCCClimateZone2) saving("climate10.gph", replace) 
+		
+
+/// 11		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+logit fuel_poor_lihc c.(HWN_1 HWN_2)##c.CWN##i.NCCClimateZone2 year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(NCCClimateZone2==1) ci saving(nz1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(NCCClimateZone2==2) ci saving(nz2, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(NCCClimateZone2==3) ci saving(nz3, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(NCCClimateZone2==4) ci saving(nz4, replace)
+
+use "nz1.dta", clear
+gen NCCClimateZone2=1
+append using  "nz2.dta"
+replace NCCClimateZone2=2 if NCCClimateZone2==.
+append using  "nz3.dta"
+replace NCCClimateZone2=3 if NCCClimateZone2==.
+append using  "nz4.dta"
+replace NCCClimateZone2=4 if NCCClimateZone2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+		
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate11.gph", replace) 
+
+
+
+/// 12		
+use "energy_poverty.dta", clear
+fracgen HWN 2 3
+fracgen CWN 3 3
+
+logit bills_unable c.(HWN_1 HWN_2)##c.(CWN_1 CWN_2)##i.NCCClimateZone2  year_2-year_17 , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(NCCClimateZone2==1) ci saving(oz1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(NCCClimateZone2==2) ci saving(oz2, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(NCCClimateZone2==3) ci saving(oz3, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(NCCClimateZone2==4) ci saving(oz4, replace)
+
+use "oz1.dta", clear
+gen NCCClimateZone2=1
+append using  "oz2.dta"
+replace NCCClimateZone2=2 if NCCClimateZone2==.
+append using  "oz3.dta"
+replace NCCClimateZone2=3 if NCCClimateZone2==.
+append using  "oz4.dta"
+replace NCCClimateZone2=4 if NCCClimateZone2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+		
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.2) by(NCCClimateZone2) saving("climate12.gph", replace) 
+		
+
+		
+use "energy_poverty.dta", clear
+//mfpigen,  linadj(year_2-year_17 ): regress propfuelpay_eq_p  min_temp max_temp , vce (cluster ID)
+fracgen max_temp 1
+fracgen min_temp 3 3
+
+regress propfuelpay_eq_p c.max_temp##c.(min_te_1 min_te_2)##i.HH_struc2 year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(24(2)36) at2(4(2)16) at(HH_struc2==1) ci saving(gx1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==2) ci saving(gx2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==3) ci saving(gx3, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==4) ci saving(gx4, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==5) ci saving(gx5, replace)
+
+use "gx1.dta", clear
+gen HH_struc2=1
+append using  "gx2.dta"
+replace HH_struc2=2 if HH_struc2==.
+append using  "gx3.dta"
+replace HH_struc2=3 if HH_struc2==.
+append using  "gx4.dta"
+replace HH_struc2=4 if HH_struc2==.
+append using  "gx5.dta"
+replace HH_struc2=5 if HH_struc2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.06) by(HH_struc2) saving("hh1.gph", replace)
+
+
+
+/// 2		
+use "energy_poverty.dta", clear
+//mfpigen,  linadj(year_2-year_17): logit fuel10_eq  min_temp max_temp , vce (cluster ID)
+fracgen max_temp 1
+fracgen min_temp 3 3
+
+logit fuel10_eq c.max_temp##c.(min_te_1 min_te_2)##i.HH_struc2 year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(24(2)36) at2(4(2)16) at(HH_struc2==1) ci saving(ax1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==2) ci saving(ax2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==3) ci saving(ax3, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==4) ci saving(ax4, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==5) ci saving(ax5, replace)
+
+use "ax1.dta", clear
+gen HH_struc2=1
+append using  "ax2.dta"
+replace HH_struc2=2 if HH_struc2==.
+append using  "ax3.dta"
+replace HH_struc2=3 if HH_struc2==.
+append using  "ax4.dta"
+replace HH_struc2=4 if HH_struc2==.
+append using  "ax5.dta"
+replace HH_struc2=5 if HH_struc2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+		
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(HH_struc2) saving("hh2.gph", replace)
+		
+		
+		
+/// 3		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit fuel_poor_lihc  min_temp max_temp , vce (cluster ID)
+fracgen max_temp -1 -1
+fracgen min_temp 0 0
+
+logit fuel_poor_lihc c.(max_te_1 max_te_2)##c.(min_te_1 min_te_2)##i.HH_struc2 year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(24(2)36) at2(4(2)16) at(HH_struc2==1) ci saving(bx1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==2) ci saving(bx2, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==3) ci saving(bx3, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==4) ci saving(bx4, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==5) ci saving(bx5, replace)
+
+use "bx1.dta", clear
+gen HH_struc2=1
+append using  "bx2.dta"
+replace HH_struc2=2 if HH_struc2==.
+append using  "bx3.dta"
+replace HH_struc2=3 if HH_struc2==.
+append using  "bx4.dta"
+replace HH_struc2=4 if HH_struc2==.
+append using  "bx5.dta"
+replace HH_struc2=5 if HH_struc2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(HH_struc2) saving("hh3.gph", replace)
+
+		
+/// 4		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit bills_unable  min_temp max_temp , vce (cluster ID)
+fracgen max_temp -.5 -.5
+fracgen min_temp 1
+
+logit bills_unable c.min_temp##c.(max_te_1 max_te_2)##i.HH_struc2 year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(24(2)36) at2(4(2)16) at(HH_struc2==1) ci saving(cx1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(HH_struc2==2) ci saving(cx2, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(HH_struc2==3) ci saving(cx3, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(HH_struc2==4) ci saving(cx4, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(HH_struc2==5) ci saving(cx5, replace)
+
+use "cx1.dta", clear
+gen HH_struc2=1
+append using  "cx2.dta"
+replace HH_struc2=2 if HH_struc2==.
+append using  "cx3.dta"
+replace HH_struc2=3 if HH_struc2==.
+append using  "cx4.dta"
+replace HH_struc2=4 if HH_struc2==.
+append using  "cx5.dta"
+replace HH_struc2=5 if HH_struc2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(HH_struc2) saving("hh4.gph", replace)
+		
+
+
+
+
+
+
+
+
+
+
+/// 5
+use "energy_poverty.dta", clear
+fracgen HWD_mean 1
+fracgen CWD_mean 3 3
+
+regress propfuelpay_eq_p c.HWD_mean##c.(CWD_me_1 CWD_me_2)##i.HH_struc2 year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(HH_struc2==1) ci saving(dx1, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(HH_struc2==2) ci saving(dx2, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(HH_struc2==3) ci saving(dx3, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(HH_struc2==4) ci saving(dx4, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(HH_struc2==5) ci saving(dx5, replace)
+
+use "dx1.dta", clear
+gen HH_struc2=1
+append using  "dx2.dta"
+replace HH_struc2=2 if HH_struc2==.
+append using  "dx3.dta"
+replace HH_struc2=3 if HH_struc2==.
+append using  "dx4.dta"
+replace HH_struc2=4 if HH_struc2==.
+append using  "dx5.dta"
+replace HH_struc2=5 if HH_struc2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
+replace j=j+2
+rename j CWD_mean
+
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.06) by(HH_struc2) saving("hh5.gph", replace) 
+
+
+		
+/// 6
+use "energy_poverty.dta", clear
+fracgen HWD_mean 2 3
+fracgen CWD_mean 3 3
+
+logit fuel10_eq c.(HWD_me_1 HWD_me_2)##c.(CWD_me_1 CWD_me_2)##i.HH_struc2 year_2-year_17, vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(HH_struc2==1) ci saving(ex1, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(HH_struc2==2) ci saving(ex2, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(HH_struc2==3) ci saving(ex3, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(HH_struc2==4) ci saving(ex4, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(HH_struc2==5) ci saving(ex5, replace)
+
+use "ex1.dta", clear
+gen HH_struc2=1
+append using  "ex2.dta"
+replace HH_struc2=2 if HH_struc2==.
+append using  "ex3.dta"
+replace HH_struc2=3 if HH_struc2==.
+append using  "ex4.dta"
+replace HH_struc2=4 if HH_struc2==.
+append using  "ex5.dta"
+replace HH_struc2=5 if HH_struc2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
+replace j=j+2
+rename j CWD_mean
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.1) by(HH_struc2) saving("hh6.gph", replace) 
+
+		
+/// 7		
+use "energy_poverty.dta", clear
+fracgen HWD_mean 2 2
+fracgen CWD_mean 1
+
+logit fuel_poor_lihc c.(HWD_me_1 HWD_me_2)##c.CWD_mean##i.HH_struc2 year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(HH_struc2==1) ci saving(fx1, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(HH_struc2==2) ci saving(fx2, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(HH_struc2==3) ci saving(fx3, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(HH_struc2==4) ci saving(fx4, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(HH_struc2==5) ci saving(fx5, replace)
+
+
+use "fx1.dta", clear
+gen HH_struc2=1
+append using  "fx2.dta"
+replace HH_struc2=2 if HH_struc2==.
+append using  "fx3.dta"
+replace HH_struc2=3 if HH_struc2==.
+append using  "fx4.dta"
+replace HH_struc2=4 if HH_struc2==.
+append using  "fx5.dta"
+replace HH_struc2=5 if HH_struc2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
+replace j=j+2
+rename j CWD_mean
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh7.gph", replace)
+
+
+/// 8		
+use "energy_poverty.dta", clear
+fracgen HWD_mean 1
+fracgen CWD_mean -2
+
+logit bills_unable c.(HWD_mean)##c.CWD_me_1##i.HH_struc2  year_2-year_17 if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(HH_struc2==1) ci saving(hx1, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(HH_struc2==2) ci saving(hx2, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(HH_struc2==3) ci saving(hx3, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(HH_struc2==4) ci saving(hx4, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(HH_struc2==5) ci saving(hx5, replace)
+
+use "hx1.dta", clear
+gen HH_struc2=1
+append using  "hx2.dta"
+replace HH_struc2=2 if HH_struc2==.
+append using  "hx3.dta"
+replace HH_struc2=3 if HH_struc2==.
+append using  "hx4.dta"
+replace HH_struc2=4 if HH_struc2==.
+append using  "hx5.dta"
+replace HH_struc2=5 if HH_struc2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
+replace j=j+2
+rename j CWD_mean
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh8.gph", replace) 
+				
+		
+		
+		
+		
+		
+		
+		
+/// 9		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+regress propfuelpay_eq_p c.(HWN_1 HWN_2)##c.CWN##i.HH_struc2 year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(HH_struc2==1) ci saving(lx1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(HH_struc2==2) ci saving(lx2, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(HH_struc2==3) ci saving(lx3, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(HH_struc2==4) ci saving(lx4, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(HH_struc2==5) ci saving(lx5, replace)
+
+use "lx1.dta", clear
+gen HH_struc2=1
+append using  "lx2.dta"
+replace HH_struc2=2 if HH_struc2==.
+append using  "lx3.dta"
+replace HH_struc2=3 if HH_struc2==.
+append using  "lx4.dta"
+replace HH_struc2=4 if HH_struc2==.
+append using  "lx5.dta"
+replace HH_struc2=5 if HH_struc2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+
+rename j CWN
+		
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.05) by(HH_struc2) saving("hh9.gph", replace)
+
+
+
+/// 10		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+logit fuel10_eq c.(HWN_1 HWN_2)##c.CWN##i.HH_struc2 year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(HH_struc2==1) ci saving(mx1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(HH_struc2==2) ci saving(mx2, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(HH_struc2==3) ci saving(mx3, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(HH_struc2==4) ci saving(mx4, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(HH_struc2==5) ci saving(mx5, replace)
+
+use "mx1.dta", clear
+gen HH_struc2=1
+append using  "mx2.dta"
+replace HH_struc2=2 if HH_struc2==.
+append using  "mx3.dta"
+replace HH_struc2=3 if HH_struc2==.
+append using  "mx4.dta"
+replace HH_struc2=4 if HH_struc2==.
+append using  "mx5.dta"
+replace HH_struc2=5 if HH_struc2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+		
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.12) by(HH_struc2) saving("hh10.gph", replace) 
+		
+
+/// 11		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+logit fuel_poor_lihc c.(HWN_1 HWN_2)##c.CWN##i.HH_struc2 year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(HH_struc2==1) ci saving(nx1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(HH_struc2==2) ci saving(nx2, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(HH_struc2==3) ci saving(nx3, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(HH_struc2==4) ci saving(nx4, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(HH_struc2==5) ci saving(nx5, replace)
+
+use "nx1.dta", clear
+gen HH_struc2=1
+append using  "nx2.dta"
+replace HH_struc2=2 if HH_struc2==.
+append using  "nx3.dta"
+replace HH_struc2=3 if HH_struc2==.
+append using  "nx4.dta"
+replace HH_struc2=4 if HH_struc2==.
+append using  "nx5.dta"
+replace HH_struc2=5 if HH_struc2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+		
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh11.gph", replace) 
+
+
+
+/// 12		
+use "energy_poverty.dta", clear
+fracgen HWN 2 3
+fracgen CWN 3 3
+
+logit bills_unable c.(HWN_1 HWN_2)##c.(CWN_1 CWN_2)##i.HH_struc2  year_2-year_17 , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(HH_struc2==1) ci saving(ox1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(HH_struc2==2) ci saving(ox2, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(HH_struc2==3) ci saving(ox3, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(HH_struc2==4) ci saving(ox4, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(HH_struc2==5) ci saving(ox5, replace)
+
+use "ox1.dta", clear
+gen HH_struc2=1
+append using  "ox2.dta"
+replace HH_struc2=2 if HH_struc2==.
+append using  "ox3.dta"
+replace HH_struc2=3 if HH_struc2==.
+append using  "ox4.dta"
+replace HH_struc2=4 if HH_struc2==.
+append using  "ox5.dta"
+replace HH_struc2=5 if HH_struc2==.
+
+reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+		
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.2) by(HH_struc2) saving("hh12.gph", replace) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+//////////////// age group ////////////////
+
+use "energy_poverty.dta", clear
+//mfpigen,  linadj(year_2-year_17 ): regress propfuelpay_eq_p  min_temp max_temp , vce (cluster ID)
+fracgen max_temp 1
+fracgen min_temp 3 3
+
+regress propfuelpay_eq_p c.max_temp##c.(min_te_1 min_te_2)##i.AgeC3 year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==1) ci saving(m11, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==2) ci saving(m21, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==3) ci saving(m31, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==4) ci saving(m41, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==5) ci saving(m51, replace)
+
+use "m11.dta", clear
+gen AgeC3=1
+append using  "m21.dta"
+replace AgeC3=2 if AgeC3==.
+append using  "m31.dta"
+replace AgeC3=3 if AgeC3==.
+append using  "m41.dta"
+replace AgeC3=4 if AgeC3==.
+append using  "m51.dta"
+replace AgeC3=5 if AgeC3==.
+
+reshape long _margin _ci_lb _ci_ub , i(i AgeC3) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+label var max_temp "Average max temperature"
+label var min_temp "Average min temperature"
+label var _margin "Proportion of energy expense"
+label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
+label value AgeC3 AgeC3
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.06) by(AgeC3)
+
+
+
+/// 2		
+use "energy_poverty.dta", clear
+//mfpigen,  linadj(year_2-year_17): logit fuel10_eq  min_temp max_temp , vce (cluster ID)
+fracgen max_temp 1
+fracgen min_temp 3 3
+
+logit fuel10_eq c.max_temp##c.(min_te_1 min_te_2)##i.AgeC3 year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==1) ci saving(n11, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==2) ci saving(n21, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==3) ci saving(n31, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==4) ci saving(n41, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==5) ci saving(n51, replace)
+
+use "n11.dta", clear
+gen AgeC3=1
+append using  "n21.dta"
+replace AgeC3=2 if AgeC3==.
+append using  "n31.dta"
+replace AgeC3=3 if AgeC3==.
+append using  "n41.dta"
+replace AgeC3=4 if AgeC3==.
+append using  "n51.dta"
+replace AgeC3=5 if AgeC3==.
+
+reshape long _margin _ci_lb _ci_ub , i(i AgeC3) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+label var max_temp "Average max temperature"
+label var min_temp "Average min temperature"
+label var _margin "Risk of >10% energy expense"
+label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
+label value AgeC3 AgeC3
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.12) by(AgeC3)
+
+
+		
+/// 3		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit fuel_poor_lihc  min_temp max_temp , vce (cluster ID)
+fracgen max_temp -1 -1
+fracgen min_temp 0 0
+
+logit fuel_poor_lihc c.max_temp##c.(min_te_1 min_te_2)##i.AgeC3 year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==1) ci saving(o11, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==2) ci saving(o21, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==3) ci saving(o31, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==4) ci saving(o41, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==5) ci saving(o51, replace)
+
+use "o11.dta", clear
+gen AgeC3=1
+append using  "o21.dta"
+replace AgeC3=2 if AgeC3==.
+append using  "o31.dta"
+replace AgeC3=3 if AgeC3==.
+append using  "o41.dta"
+replace AgeC3=4 if AgeC3==.
+append using  "o51.dta"
+replace AgeC3=5 if AgeC3==.
+
+reshape long _margin _ci_lb _ci_ub , i(i AgeC3) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+label var max_temp "Average max temperature"
+label var min_temp "Average min temperature"
+label var _margin "Risk of LIHC"
+label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
+label value AgeC3 AgeC3
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.12) by(AgeC3) saving("age_3.gph", replace)
+
+		
+/// 4		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit bills_unable  min_temp max_temp , vce (cluster ID)
+fracgen max_temp -.5 -.5
+fracgen min_temp 1
+
+logit bills_unable c.min_temp##c.(max_te_1 max_te_2)##i.AgeC3 year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(AgeC3==1) ci saving(p11, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(AgeC3==2) ci saving(p21, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(AgeC3==3) ci saving(p31, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(AgeC3==4) ci saving(p41, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(AgeC3==5) ci saving(p51, replace)
+
+use "p11.dta", clear
+gen AgeC3=1
+append using  "p21.dta"
+replace AgeC3=2 if AgeC3==.
+append using  "p31.dta"
+replace AgeC3=3 if AgeC3==.
+append using  "p41.dta"
+replace AgeC3=4 if AgeC3==.
+append using  "p51.dta"
+replace AgeC3=5 if AgeC3==.
+
+reshape long _margin _ci_lb _ci_ub , i(i AgeC3) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+label var max_temp "Average max temperature"
+label var min_temp "Average min temperature"
+label var _margin "Risk of utility bill arrear"
+label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
+label value AgeC3 AgeC3
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(AgeC3)
+
+
+
+/// 5
+use "energy_poverty.dta", clear
+fracgen HWD_mean 1
+fracgen CWD_mean 3 3
+
+regress propfuelpay_eq_p c.HWD_mean##c.(CWD_me_1 CWD_me_2)##i.AgeC3 year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(AgeC3==1) ci saving(q11, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(AgeC3==2) ci saving(q21, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(AgeC3==3) ci saving(q31, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(AgeC3==4) ci saving(q41, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(AgeC3==5) ci saving(q51, replace)
+
+use "q11.dta", clear
+gen AgeC3=1
+append using  "q21.dta"
+replace AgeC3=2 if AgeC3==.
+append using  "q31.dta"
+replace AgeC3=3 if AgeC3==.
+append using  "q41.dta"
+replace AgeC3=4 if AgeC3==.
+append using  "q51.dta"
+replace AgeC3=5 if AgeC3==.
+
+reshape long _margin _ci_lb _ci_ub , i(i AgeC3) j(j)
+replace j=j+2
+rename j CWD_mean
+
+label var HWD_mean "Average heatwave duration"
+label var CWD_mean "Average coldwave duration"
+label var _margin "Proportion of energy expense"
+label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
+label value AgeC3 AgeC3
+
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.06) by(AgeC3)
+
+		
+/// 6
+use "energy_poverty.dta", clear
+fracgen HWD_mean 2 3
+fracgen CWD_mean 3 3
+
+logit fuel10_eq c.(HWD_me_1 HWD_me_2)##c.(CWD_me_1 CWD_me_2)##i.AgeC3 year_2-year_17, vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(AgeC3==1) ci saving(r11, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(AgeC3==2) ci saving(r21, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(AgeC3==3) ci saving(r31, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(AgeC3==4) ci saving(r41, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(AgeC3==5) ci saving(r51, replace)
+
+use "r11.dta", clear
+gen AgeC3=1
+append using  "r21.dta"
+replace AgeC3=2 if AgeC3==.
+append using  "r31.dta"
+replace AgeC3=3 if AgeC3==.
+append using  "r41.dta"
+replace AgeC3=4 if AgeC3==.
+append using  "r51.dta"
+replace AgeC3=5 if AgeC3==.
+
+reshape long _margin _ci_lb _ci_ub , i(i AgeC3) j(j)
+replace j=j+2
+rename j CWD_mean
+
+label var HWD_mean "Average heatwave duration"
+label var CWD_mean "Average coldwave duration"
+label var _margin "Risk of >10% energy expense"
+label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
+label value AgeC3 AgeC3
+
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.11) by(AgeC3)
+		
+		
+/// 7		
+use "energy_poverty.dta", clear
+fracgen HWD_mean 2 2
+fracgen CWD_mean 1
+
+logit fuel_poor_lihc c.(HWD_me_1 HWD_me_2)##c.CWD_mean##i.AgeC3 year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(AgeC3==1) ci saving(s11, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(AgeC3==2) ci saving(s21, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(AgeC3==3) ci saving(s31, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(AgeC3==4) ci saving(s41, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(AgeC3==5) ci saving(s51, replace)
+
+
+use "s11.dta", clear
+gen AgeC3=1
+append using  "s21.dta"
+replace AgeC3=2 if AgeC3==.
+append using  "s31.dta"
+replace AgeC3=3 if AgeC3==.
+append using  "s41.dta"
+replace AgeC3=4 if AgeC3==.
+append using  "s51.dta"
+replace AgeC3=5 if AgeC3==.
+
+reshape long _margin _ci_lb _ci_ub , i(i AgeC3) j(j)
+replace j=j+2
+rename j CWD_mean
+
+label var HWD_mean "Average heatwave duration"
+label var CWD_mean "Average coldwave duration"
+label var _margin "Risk of LIHC"
+label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
+label value AgeC3 AgeC3
+
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(AgeC3)
+
+		
+/// 8		
+use "energy_poverty.dta", clear
+fracgen HWD_mean 1
+fracgen CWD_mean -2
+
+logit bills_unable c.(HWD_mean)##c.CWD_me_1##i.AgeC3  year_2-year_17 if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(AgeC3==1) ci saving(t11, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(AgeC3==2) ci saving(t21, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(AgeC3==3) ci saving(t31, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(AgeC3==4) ci saving(t41, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(AgeC3==5) ci saving(t51, replace)
+
+use "t11.dta", clear
+gen AgeC3=1
+append using  "t21.dta"
+replace AgeC3=2 if AgeC3==.
+append using  "t31.dta"
+replace AgeC3=3 if AgeC3==.
+append using  "t41.dta"
+replace AgeC3=4 if AgeC3==.
+append using  "t51.dta"
+replace AgeC3=5 if AgeC3==.
+
+reshape long _margin _ci_lb _ci_ub , i(i AgeC3) j(j)
+replace j=j+2
+rename j CWD_mean
+
+label var HWD_mean "Average heatwave duration"
+label var CWD_mean "Average coldwave duration"
+label var _margin "Risk of utility bill arrear"
+label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
+label value AgeC3 AgeC3
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.15) by(AgeC3)
+		
+		
+/// 9		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+regress propfuelpay_eq_p c.(HWN_1 HWN_2)##c.CWN##i.AgeC3 year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(AgeC3==1) ci saving(u11, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(AgeC3==2) ci saving(u21, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(AgeC3==3) ci saving(u31, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(AgeC3==4) ci saving(u41, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(AgeC3==5) ci saving(u51, replace)
+
+use "u11.dta", clear
+gen AgeC3=1
+append using  "u21.dta"
+replace AgeC3=2 if AgeC3==.
+append using  "u31.dta"
+replace AgeC3=3 if AgeC3==.
+append using  "u41.dta"
+replace AgeC3=4 if AgeC3==.
+append using  "u51.dta"
+replace AgeC3=5 if AgeC3==.
+
+reshape long _margin _ci_lb _ci_ub , i(i AgeC3) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+label var HWN "Number of heatwave events"
+label var CWN "Number of coldwave events"
+label var _margin "Proportion of energy expense"
+label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
+label value AgeC3 AgeC3
+
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.05) by(AgeC3)
+
+
+
+/// 10
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+logit fuel10_eq c.(HWN_1 HWN_2)##c.CWN##i.AgeC3 year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(AgeC3==1) ci saving(v11, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(AgeC3==2) ci saving(v21, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(AgeC3==3) ci saving(v31, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(AgeC3==4) ci saving(v41, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(AgeC3==5) ci saving(v51, replace)
+
+use "v11.dta", clear
+gen AgeC3=1
+append using  "v21.dta"
+replace AgeC3=2 if AgeC3==.
+append using  "v31.dta"
+replace AgeC3=3 if AgeC3==.
+append using  "v41.dta"
+replace AgeC3=4 if AgeC3==.
+append using  "v51.dta"
+replace AgeC3=5 if AgeC3==.
+
+reshape long _margin _ci_lb _ci_ub , i(i AgeC3) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+label var HWN "Number of heatwave events"
+label var CWN "Number of coldwave events"
+label var _margin "Risk of >10% energy expense"
+label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
+label value AgeC3 AgeC3
+
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.1) by(AgeC3)
+		
+		
+/// 11		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+logit fuel_poor_lihc c.(HWN_1 HWN_2)##c.CWN##i.AgeC3 year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(AgeC3==1) ci saving(w11, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(AgeC3==2) ci saving(w21, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(AgeC3==3) ci saving(w31, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(AgeC3==4) ci saving(w41, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(AgeC3==5) ci saving(w51, replace)
+
+use "w11.dta", clear
+gen AgeC3=1
+append using  "w21.dta"
+replace AgeC3=2 if AgeC3==.
+append using  "w31.dta"
+replace AgeC3=3 if AgeC3==.
+append using  "w41.dta"
+replace AgeC3=4 if AgeC3==.
+append using  "w51.dta"
+replace AgeC3=5 if AgeC3==.
+
+reshape long _margin _ci_lb _ci_ub , i(i AgeC3) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+label var HWN "Number of heatwave events"
+label var CWN "Number of coldwave events"
+label var _margin "Risk of LIHC"
+label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
+label value AgeC3 AgeC3
+
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(AgeC3)
+
+		
+/// 12	
+use "energy_poverty.dta", clear
+fracgen HWN 2 3
+fracgen CWN 3 3
+
+logit bills_unable c.(HWN_1 HWN_2)##c.(CWN_1 CWN_2)##i.AgeC3  year_2-year_17 , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(AgeC3==1) ci saving(x11, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(AgeC3==2) ci saving(x21, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(AgeC3==3) ci saving(x31, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(AgeC3==4) ci saving(x41, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(AgeC3==5) ci saving(x51, replace)
+
+use "x11.dta", clear
+gen AgeC3=1
+append using  "x21.dta"
+replace AgeC3=2 if AgeC3==.
+append using  "x31.dta"
+replace AgeC3=3 if AgeC3==.
+append using  "x41.dta"
+replace AgeC3=4 if AgeC3==.
+append using  "x51.dta"
+replace AgeC3=5 if AgeC3==.
+
+reshape long _margin _ci_lb _ci_ub , i(i AgeC3) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+label var HWN "Number of heatwave events"
+label var CWN "Number of coldwave events"
+label var _margin "Risk of utility bill arrear"
+label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
+label value AgeC3 AgeC3
+
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.16) by(AgeC3)
+	
+
+
+
+
+**# Bookmark #7
+//////////////// dwelling quality ////////////////
+/// 1
+use "energy_poverty.dta", clear
+fracgen max_temp 1
+fracgen min_temp 3 3
+
+regress propfuelpay_eq_p c.max_temp##c.(min_te_1 min_te_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==1) ci saving(aa1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==0) ci saving(aa2, replace)
+
+use "aa1.dta", clear
+gen home_satisfaction_dis=1
+append using  "aa2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+label var max_temp "Average max temperature"
+label var min_temp "Average min temperature"
+label var _margin "Proportion of energy expense"
+label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
+label value home_satisfaction_dis home_satisfaction_dis
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.06) by(home_satisfaction_dis) saving("dwel1.gph", replace)
+
+
+/// 2		
+use "energy_poverty.dta", clear
+fracgen max_temp 1
+fracgen min_temp 3 3
+
+logit fuel10_eq c.max_temp##c.(min_te_1 min_te_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==1) ci saving(bb1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==0) ci saving(bb2, replace)
+
+use "bb1.dta", clear
+gen home_satisfaction_dis=1
+append using  "bb2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+label var max_temp "Average max temperature"
+label var min_temp "Average min temperature"
+label var _margin "Risk of >10% energy expense"
+label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
+label value home_satisfaction_dis home_satisfaction_dis
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(home_satisfaction_dis) saving("dwel2.gph", replace)
+
+		
+/// 3		
+use "energy_poverty.dta", clear
+fracgen max_temp -1 -1
+fracgen min_temp 0 0
+
+logit fuel_poor_lihc c.max_temp##c.(min_te_1 min_te_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==1) ci saving(cc1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==0) ci saving(cc2, replace)
+
+use "cc1.dta", clear
+gen home_satisfaction_dis=1
+append using  "cc2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+label var max_temp "Average max temperature"
+label var min_temp "Average min temperature"
+label var _margin "Risk of LIHC"
+label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
+label value home_satisfaction_dis home_satisfaction_dis
+		
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(home_satisfaction_dis) saving("dwel3.gph", replace)
+
+
+
+/// 4		
+use "energy_poverty.dta", clear
+fracgen max_temp -.5 -.5
+fracgen min_temp 1
+
+logit bills_unable c.min_temp##c.(max_te_1 max_te_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==1) ci saving(dd1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==0) ci saving(dd2, replace)
+
+use "dd1.dta", clear
+gen home_satisfaction_dis=1
+append using  "dd2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+label var max_temp "Average max temperature"
+label var min_temp "Average min temperature"
+label var _margin "Risk of utility bill arrear"
+label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
+label value home_satisfaction_dis home_satisfaction_dis
+		
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(home_satisfaction_dis) saving("dwel4.gph", replace)
+		
+		
+		
+/// 5
+use "energy_poverty.dta", clear
+fracgen HWD_mean 1
+fracgen CWD_mean 3 3
+
+regress propfuelpay_eq_p c.HWD_mean##c.(CWD_me_1 CWD_me_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(home_satisfaction_dis==1) ci saving(ee1, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(home_satisfaction_dis==0) ci saving(ee2, replace)
+
+use "ee1.dta", clear
+gen home_satisfaction_dis=1
+append using  "ee2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=j+2
+rename j CWD_mean
+
+label var HWD_mean "Average heatwave duration"
+label var CWD_mean "Average coldwave duration"
+label var _margin "Proportion of energy expense"
+label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
+label value home_satisfaction_dis home_satisfaction_dis
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.05) by(home_satisfaction_dis) saving("dwel5.gph", replace) 
+
+		
+/// 6
+use "energy_poverty.dta", clear
+fracgen HWD_mean 2 3
+fracgen CWD_mean 3 3
+
+logit fuel10_eq c.(HWD_me_1 HWD_me_2)##c.(CWD_me_1 CWD_me_2)##i.home_satisfaction_dis year_2-year_17, vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(home_satisfaction_dis==1) ci saving(ff1, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(home_satisfaction_dis==0) ci saving(ff2, replace)
+
+use "ff1.dta", clear
+gen home_satisfaction_dis=1
+append using  "ff2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=j+2
+rename j CWD_mean
+
+label var HWD_mean "Average heatwave duration"
+label var CWD_mean "Average coldwave duration"
+label var _margin "Risk of >10% energy expense"
+label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
+label value home_satisfaction_dis home_satisfaction_dis
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.08) by(home_satisfaction_dis) saving("dwel6.gph", replace) 
+
+
+		
+/// 7		
+use "energy_poverty.dta", clear
+fracgen HWD_mean 2 2
+fracgen CWD_mean 1
+
+logit fuel_poor_lihc c.(HWD_me_1 HWD_me_2)##c.CWD_mean##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(home_satisfaction_dis==1) ci saving(gg1, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(home_satisfaction_dis==0) ci saving(gg2, replace)
+
+use "gg1.dta", clear
+gen home_satisfaction_dis=1
+append using  "gg2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=j+2
+rename j CWD_mean
+
+label var HWD_mean "Average heatwave duration"
+label var CWD_mean "Average coldwave duration"
+label var _margin "Risk of LIHC"
+label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
+label value home_satisfaction_dis home_satisfaction_dis
+
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.13) by(home_satisfaction_dis) saving("dwel7.gph", replace) 
+
+
+		
+/// 8		
+use "energy_poverty.dta", clear
+fracgen HWD_mean 1
+fracgen CWD_mean -2
+
+logit bills_unable c.(HWD_mean)##c.CWD_me_1##i.home_satisfaction_dis  year_2-year_17 if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(home_satisfaction_dis==1) ci saving(hh1, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(home_satisfaction_dis==0) ci saving(hh2, replace)
+
+use "hh1.dta", clear
+gen home_satisfaction_dis=1
+append using  "hh2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=j+2
+rename j CWD_mean
+
+label var HWD_mean "Average heatwave duration"
+label var CWD_mean "Average coldwave duration"
+label var _margin "Risk of utility bill arrear"
+label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
+label value home_satisfaction_dis home_satisfaction_dis
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.25) by(home_satisfaction_dis) saving("dwel8.gph", replace) 
+		
+		
+		
+/// 9		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+regress propfuelpay_eq_p c.(HWN_1 HWN_2)##c.CWN##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(home_satisfaction_dis==1) ci saving(ii1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(home_satisfaction_dis==0) ci saving(ii2, replace)
+
+use "ii1.dta", clear
+gen home_satisfaction_dis=1
+append using  "ii2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+label var HWN "Number of heatwave events"
+label var CWN "Number of coldwave events"
+label var _margin "Proportion of energy expense"
+label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
+label value home_satisfaction_dis home_satisfaction_dis
+
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.05) by(home_satisfaction_dis) saving("dwel9.gph", replace) 
+
+		
+/// 10
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+logit fuel10_eq c.(HWN_1 HWN_2)##c.CWN##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(home_satisfaction_dis==1) ci saving(jj1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(home_satisfaction_dis==0) ci saving(jj2, replace)
+
+use "jj1.dta", clear
+gen home_satisfaction_dis=1
+append using  "jj2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+label var HWN "Number of heatwave events"
+label var CWN "Number of coldwave events"
+label var _margin "Risk of >10% energy expense"
+label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
+label value home_satisfaction_dis home_satisfaction_dis
+
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.1) by(home_satisfaction_dis)
+		
+		
+/// 11		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+logit fuel_poor_lihc c.(HWN_1 HWN_2)##c.CWN##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(home_satisfaction_dis==1) ci saving(kk1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(home_satisfaction_dis==0) ci saving(kk2, replace)
+
+use "kk1.dta", clear
+gen home_satisfaction_dis=1
+append using  "kk2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+label var HWN "Number of heatwave events"
+label var CWN "Number of coldwave events"
+label var _margin "Risk of LIHC"
+label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
+label value home_satisfaction_dis home_satisfaction_dis
+
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
+		
+
+/// 12
+use "energy_poverty.dta", clear
+fracgen HWN 2 3
+fracgen CWN 3 3
+
+logit bills_unable c.(HWN_1 HWN_2)##c.(CWN_1 CWN_2)##i.home_satisfaction_dis  year_2-year_17 , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(home_satisfaction_dis==1) ci saving(ll1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(home_satisfaction_dis==0) ci saving(ll2, replace)
+
+use "ll1.dta", clear
+gen home_satisfaction_dis=1
+append using  "ll2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+label var HWN "Number of heatwave events"
+label var CWN "Number of coldwave events"
+label var _margin "Risk of utility bill arrear"
+label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
+label value home_satisfaction_dis home_satisfaction_dis
+		
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
+		
+
+		
+
+
+
+
+
+
+
+
+use "energy_poverty.dta", clear
+fracgen max_temp 1
+fracgen min_temp 3 3
+
+regress propfuelpay_eq_p c.max_temp##c.(min_te_1 min_te_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==1) ci saving(aa1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==0) ci saving(aa2, replace)
+
+use "aa1.dta", clear
+gen home_satisfaction_dis=1
+append using  "aa2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.06) by(home_satisfaction_dis)
+
+
+/// 2		
+use "energy_poverty.dta", clear
+fracgen max_temp 1
+fracgen min_temp 3 3
+
+logit fuel10_eq c.max_temp##c.(min_te_1 min_te_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==1) ci saving(bb1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==0) ci saving(bb2, replace)
+
+use "bb1.dta", clear
+gen home_satisfaction_dis=1
+append using  "bb2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(home_satisfaction_dis)
+
+		
+/// 3		
+use "energy_poverty.dta", clear
+fracgen max_temp -1 -1
+fracgen min_temp 0 0
+
+logit fuel_poor_lihc c.max_temp##c.(min_te_1 min_te_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==1) ci saving(cc1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==0) ci saving(cc2, replace)
+
+use "cc1.dta", clear
+gen home_satisfaction_dis=1
+append using  "cc2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+		
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(home_satisfaction_dis)
+
+
+
+/// 4		
+use "energy_poverty.dta", clear
+fracgen max_temp -.5 -.5
+fracgen min_temp 1
+
+logit bills_unable c.min_temp##c.(max_te_1 max_te_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==1) ci saving(dd1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==0) ci saving(dd2, replace)
+
+use "dd1.dta", clear
+gen home_satisfaction_dis=1
+append using  "dd2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+		
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(home_satisfaction_dis)
+		
+		
+		
+/// 5
+use "energy_poverty.dta", clear
+fracgen HWD_mean 1
+fracgen CWD_mean 3 3
+
+regress propfuelpay_eq_p c.HWD_mean##c.(CWD_me_1 CWD_me_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(home_satisfaction_dis==1) ci saving(ee1, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(home_satisfaction_dis==0) ci saving(ee2, replace)
+
+use "ee1.dta", clear
+gen home_satisfaction_dis=1
+append using  "ee2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=j+2
+rename j CWD_mean
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.05) by(home_satisfaction_dis)
+
+		
+/// 6
+use "energy_poverty.dta", clear
+fracgen HWD_mean 2 3
+fracgen CWD_mean 3 3
+
+logit fuel10_eq c.(HWD_me_1 HWD_me_2)##c.(CWD_me_1 CWD_me_2)##i.home_satisfaction_dis year_2-year_17, vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(home_satisfaction_dis==1) ci saving(ff1, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(home_satisfaction_dis==0) ci saving(ff2, replace)
+
+use "ff1.dta", clear
+gen home_satisfaction_dis=1
+append using  "ff2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=j+2
+rename j CWD_mean
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.08) by(home_satisfaction_dis)
+
+
+		
+/// 7		
+use "energy_poverty.dta", clear
+fracgen HWD_mean 2 2
+fracgen CWD_mean 1
+
+logit fuel_poor_lihc c.(HWD_me_1 HWD_me_2)##c.CWD_mean##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(home_satisfaction_dis==1) ci saving(gg1, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(home_satisfaction_dis==0) ci saving(gg2, replace)
+
+use "gg1.dta", clear
+gen home_satisfaction_dis=1
+append using  "gg2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=j+2
+rename j CWD_mean
+
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.13) by(home_satisfaction_dis)
+
+
+		
+/// 8		
+use "energy_poverty.dta", clear
+fracgen HWD_mean 1
+fracgen CWD_mean -2
+
+logit bills_unable c.(HWD_mean)##c.CWD_me_1##i.home_satisfaction_dis  year_2-year_17 if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(home_satisfaction_dis==1) ci saving(hh1, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(home_satisfaction_dis==0) ci saving(hh2, replace)
+
+use "hh1.dta", clear
+gen home_satisfaction_dis=1
+append using  "hh2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=j+2
+rename j CWD_mean
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.25) by(home_satisfaction_dis)
+		
+		
+		
+/// 9		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+regress propfuelpay_eq_p c.(HWN_1 HWN_2)##c.CWN##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(home_satisfaction_dis==1) ci saving(ii1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(home_satisfaction_dis==0) ci saving(ii2, replace)
+
+use "ii1.dta", clear
+gen home_satisfaction_dis=1
+append using  "ii2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.05) by(home_satisfaction_dis)
+
+		
+/// 10
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+logit fuel10_eq c.(HWN_1 HWN_2)##c.CWN##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(home_satisfaction_dis==1) ci saving(jj1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(home_satisfaction_dis==0) ci saving(jj2, replace)
+
+use "jj1.dta", clear
+gen home_satisfaction_dis=1
+append using  "jj2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.1) by(home_satisfaction_dis)
+		
+		
+/// 11		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+logit fuel_poor_lihc c.(HWN_1 HWN_2)##c.CWN##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(home_satisfaction_dis==1) ci saving(kk1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(home_satisfaction_dis==0) ci saving(kk2, replace)
+
+use "kk1.dta", clear
+gen home_satisfaction_dis=1
+append using  "kk2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis) 
+		
+
+/// 12
+use "energy_poverty.dta", clear
+fracgen HWN 2 3
+fracgen CWN 3 3
+
+logit bills_unable c.(HWN_1 HWN_2)##c.(CWN_1 CWN_2)##i.home_satisfaction_dis  year_2-year_17 , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(home_satisfaction_dis==1) ci saving(ll1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(home_satisfaction_dis==0) ci saving(ll2, replace)
+
+use "ll1.dta", clear
+gen home_satisfaction_dis=1
+append using  "ll2.dta"
+replace home_satisfaction_dis=0 if home_satisfaction_dis==.
+
+reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+		
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
+		
+		
+		
+		
+		
+		
+		
+		
+		
+use "energy_poverty.dta", clear
+fracgen max_temp 1
+fracgen min_temp 3 3
+
+regress propfuelpay_eq_p c.max_temp##c.(min_te_1 min_te_2)##i.owner year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(owner==1) ci saving(ba1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(owner==0) ci saving(ba2, replace)
+
+use "ba1.dta", clear
+gen owner=1
+append using  "ba2.dta"
+replace owner=0 if owner==.
+
+reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.06) by(owner)
+
+
+/// 2		
+use "energy_poverty.dta", clear
+fracgen max_temp 1
+fracgen min_temp 3 3
+
+logit fuel10_eq c.max_temp##c.(min_te_1 min_te_2)##i.owner year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(owner==1) ci saving(bc1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(owner==0) ci saving(bc2, replace)
+
+use "bc1.dta", clear
+gen owner=1
+append using  "bc2.dta"
+replace owner=0 if owner==.
+
+reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(owner)
+		
+
+/// 3
+use "energy_poverty.dta", clear
+fracgen max_temp -1 -1
+fracgen min_temp 0 0
+
+logit fuel_poor_lihc c.max_temp##c.(min_te_1 min_te_2)##i.owner year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(owner==1) ci saving(bd1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(owner==0) ci saving(bd2, replace)
+
+use "bd1.dta", clear
+gen owner=1
+append using  "bd2.dta"
+replace owner=0 if owner==.
+
+reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+		
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(owner)
+
+
+/// 4		
+use "energy_poverty.dta", clear
+fracgen max_temp -.5 -.5
+fracgen min_temp 1
+
+logit bills_unable c.min_temp##c.(max_te_1 max_te_2)##i.owner year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(owner==1) ci saving(be1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(owner==0) ci saving(be2, replace)
+
+use "be1.dta", clear
+gen owner=1
+append using  "be2.dta"
+replace owner=0 if owner==.
+
+reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+		
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2)
+		
+
+
+/// 5
+use "energy_poverty.dta", clear
+fracgen HWD_mean 1
+fracgen CWD_mean 3 3
+
+regress propfuelpay_eq_p c.HWD_mean##c.(CWD_me_1 CWD_me_2)##i.owner year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(owner==1) ci saving(bf1, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(owner==0) ci saving(bf2, replace)
+
+use "bf1.dta", clear
+gen owner=1
+append using  "bf2.dta"
+replace owner=0 if owner==.
+
+reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
+replace j=j+2
+rename j CWD_mean
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.05) by(owner)
+
+
+
+/// 6		
+use "energy_poverty.dta", clear
+fracgen HWD_mean 2 3
+fracgen CWD_mean 3 3
+
+logit fuel10_eq c.(HWD_me_1 HWD_me_2)##c.(CWD_me_1 CWD_me_2)##i.owner year_2-year_17, vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(owner==1) ci saving(bg1, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(owner==0) ci saving(bg2, replace)
+
+use "bg1.dta", clear
+gen owner=1
+append using  "bg2.dta"
+replace owner=0 if owner==.
+
+reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
+replace j=j+2
+rename j CWD_mean
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.08) by(owner)
+
+
+		
+/// 7		
+use "energy_poverty.dta", clear
+fracgen HWD_mean 2 2
+fracgen CWD_mean 1
+
+logit fuel_poor_lihc c.(HWD_me_1 HWD_me_2)##c.CWD_mean##i.owner year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(owner==1) ci saving(bi1, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(owner==0) ci saving(bi2, replace)
+
+use "bi1.dta", clear
+gen owner=1
+append using  "bi2.dta"
+replace owner=0 if owner==.
+
+reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
+replace j=j+2
+rename j CWD_mean
+
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.12) by(owner)
+
+		
+/// 8		
+use "energy_poverty.dta", clear
+fracgen HWD_mean 1
+fracgen CWD_mean -2
+
+logit bills_unable c.(HWD_mean)##c.CWD_me_1##i.owner  year_2-year_17 if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(owner==1) ci saving(bh1, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(owner==0) ci saving(bh2, replace)
+
+use "bh1.dta", clear
+gen owner=1
+append using  "bh2.dta"
+replace owner=0 if owner==.
+
+reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
+replace j=j+2
+rename j CWD_mean
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.2) by(owner)
+		
+		
+		
+		
+/// 9				
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+regress propfuelpay_eq_p c.(HWN_1 HWN_2)##c.CWN##i.owner year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(owner==1) ci saving(bj1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(owner==0) ci saving(bj2, replace)
+
+use "bj1.dta", clear
+gen owner=1
+append using  "bj2.dta"
+replace owner=0 if owner==.
+
+reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.002)0.05) by(owner)
+
+
+		
+/// 10
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+logit fuel10_eq c.(HWN_1 HWN_2)##c.CWN##i.owner year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(owner==1) ci saving(bk1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(owner==0) ci saving(bk2, replace)
+
+use "bk1.dta", clear
+gen owner=1
+append using  "bk2.dta"
+replace owner=0 if owner==.
+
+reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.08) by(owner)
+		
+		
+/// 11		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+logit fuel_poor_lihc c.(HWN_1 HWN_2)##c.CWN##i.owner year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(owner==1) ci saving(bl1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(owner==0) ci saving(bl2, replace)
+
+use "bl1.dta", clear
+gen owner=1
+append using  "bl2.dta"
+replace owner=0 if owner==.
+
+reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(owner)
+
+
+		
+/// 12	
+use "energy_poverty.dta", clear
+fracgen HWN 2 3
+fracgen CWN 3 3
+
+logit bills_unable c.(HWN_1 HWN_2)##c.(CWN_1 CWN_2)##i.owner  year_2-year_17 , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(owner==1) ci saving(bm1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(owner==0) ci saving(bm2, replace)
+
+use "bm1.dta", clear
+gen owner=1
+append using  "bm2.dta"
+replace owner=0 if owner==.
+
+reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+		
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.12) by(owner)
+
+		
+		
+		
+		
+
+
+
+
+
+use "energy_poverty.dta", clear
+//mfpigen,  linadj(year_2-year_17 ): regress propfuelpay_eq_p  min_temp max_temp , vce (cluster ID)
+fracgen max_temp 1
+fracgen min_temp 3 3
+
+regress propfuelpay_eq_p c.max_temp##c.(min_te_1 min_te_2)##i.PROP_AREA_PARKLAND_cat year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==1) ci saving(mm1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==2) ci saving(mm2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==3) ci saving(mm3, replace)
+
+use "mm1.dta", clear
+gen PROP_AREA_PARKLAND_cat=1
+append using  "mm2.dta"
+replace PROP_AREA_PARKLAND_cat=2 if PROP_AREA_PARKLAND_cat==.
+append using  "mm3.dta"
+replace PROP_AREA_PARKLAND_cat=3 if PROP_AREA_PARKLAND_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.07) by(PROP_AREA_PARKLAND_cat)
+	
+	
+	
+/// 2		
+use "energy_poverty.dta", clear
+//mfpigen,  linadj(year_2-year_17): logit fuel10_eq  min_temp max_temp , vce (cluster ID)
+fracgen max_temp 1
+fracgen min_temp 3 3
+
+logit fuel10_eq c.max_temp##c.(min_te_1 min_te_2)##i.PROP_AREA_PARKLAND_cat year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==1) ci saving(nn1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==2) ci saving(nn2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==3) ci saving(nn3, replace)
+
+use "nn1.dta", clear
+gen PROP_AREA_PARKLAND_cat=1
+append using  "nn2.dta"
+replace PROP_AREA_PARKLAND_cat=2 if PROP_AREA_PARKLAND_cat==.
+append using  "nn3.dta"
+replace PROP_AREA_PARKLAND_cat=3 if PROP_AREA_PARKLAND_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(PROP_AREA_PARKLAND_cat) 
+		
+/// 3		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit fuel_poor_lihc  min_temp max_temp , vce (cluster ID)
+fracgen max_temp -1 -1
+fracgen min_temp 0 0
+
+logit fuel_poor_lihc c.max_temp##c.(min_te_1 min_te_2)##i.PROP_AREA_PARKLAND_cat year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==1) ci saving(oo1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==2) ci saving(oo2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==3) ci saving(oo3, replace)
+
+use "oo1.dta", clear
+gen PROP_AREA_PARKLAND_cat=1
+append using  "oo2.dta"
+replace PROP_AREA_PARKLAND_cat=2 if PROP_AREA_PARKLAND_cat==.
+append using  "oo3.dta"
+replace PROP_AREA_PARKLAND_cat=3 if PROP_AREA_PARKLAND_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(PROP_AREA_PARKLAND_cat)
+
+
+		
+/// 4		
+use "energy_poverty.dta", clear
+//mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit bills_unable  min_temp max_temp , vce (cluster ID)
+fracgen max_temp -.5 -.5
+fracgen min_temp 1
+
+logit bills_unable c.min_temp##c.(max_te_1 max_te_2)##i.PROP_AREA_PARKLAND_cat year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==1) ci saving(pp1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==2) ci saving(pp2, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==3) ci saving(pp3, replace)
+
+use "pp1.dta", clear
+gen PROP_AREA_PARKLAND_cat=1
+append using  "pp2.dta"
+replace PROP_AREA_PARKLAND_cat=2 if PROP_AREA_PARKLAND_cat==.
+append using  "pp3.dta"
+replace PROP_AREA_PARKLAND_cat=3 if PROP_AREA_PARKLAND_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+	
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(PROP_AREA_PARKLAND_cat)
+
+
+/// 5
+use "energy_poverty.dta", clear
+fracgen HWD_mean 1
+fracgen CWD_mean 3 3
+
+regress propfuelpay_eq_p c.HWD_mean##c.(CWD_me_1 CWD_me_2)##i.PROP_AREA_PARKLAND_cat year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(PROP_AREA_PARKLAND_cat==1) ci saving(qq1, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(PROP_AREA_PARKLAND_cat==2) ci saving(qq2, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(PROP_AREA_PARKLAND_cat==3) ci saving(qq3, replace)
+
+use "qq1.dta", clear
+gen PROP_AREA_PARKLAND_cat=1
+append using  "qq2.dta"
+replace PROP_AREA_PARKLAND_cat=2 if PROP_AREA_PARKLAND_cat==.
+append using  "qq3.dta"
+replace PROP_AREA_PARKLAND_cat=3 if PROP_AREA_PARKLAND_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
+replace j=j+2
+rename j CWD_mean
+
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.055) by(PROP_AREA_PARKLAND_cat)
+		
+		
+/// 6
+use "energy_poverty.dta", clear
+fracgen HWD_mean 2 3
+fracgen CWD_mean 3 3
+
+logit fuel10_eq c.(HWD_me_1 HWD_me_2)##c.(CWD_me_1 CWD_me_2)##i.PROP_AREA_PARKLAND_cat year_2-year_17, vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(PROP_AREA_PARKLAND_cat==1) ci saving(rr1, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(PROP_AREA_PARKLAND_cat==2) ci saving(rr2, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(PROP_AREA_PARKLAND_cat==3) ci saving(rr3, replace)
+
+use "rr1.dta", clear
+gen PROP_AREA_PARKLAND_cat=1
+append using  "rr2.dta"
+replace PROP_AREA_PARKLAND_cat=2 if PROP_AREA_PARKLAND_cat==.
+append using  "rr3.dta"
+replace PROP_AREA_PARKLAND_cat=3 if PROP_AREA_PARKLAND_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
+replace j=j+2
+rename j CWD_mean
+
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.08) by(PROP_AREA_PARKLAND_cat)
+
+		
+/// 7		
+use "energy_poverty.dta", clear
+fracgen HWD_mean 2 2
+fracgen CWD_mean 1
+
+logit fuel_poor_lihc c.(HWD_me_1 HWD_me_2)##c.CWD_mean##i.PROP_AREA_PARKLAND_cat year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(PROP_AREA_PARKLAND_cat==1) ci saving(ss1, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(PROP_AREA_PARKLAND_cat==2) ci saving(ss2, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(PROP_AREA_PARKLAND_cat==3) ci saving(ss3, replace)
+
+
+use "ss1.dta", clear
+gen PROP_AREA_PARKLAND_cat=1
+append using  "ss2.dta"
+replace PROP_AREA_PARKLAND_cat=2 if PROP_AREA_PARKLAND_cat==.
+append using  "ss3.dta"
+replace PROP_AREA_PARKLAND_cat=3 if PROP_AREA_PARKLAND_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
+replace j=j+2
+rename j CWD_mean
+
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.11) by(PROP_AREA_PARKLAND_cat)
+
+
+		
+/// 8		
+use "energy_poverty.dta", clear
+fracgen HWD_mean 1
+fracgen CWD_mean -2
+
+logit bills_unable c.(HWD_mean)##c.CWD_me_1##i.PROP_AREA_PARKLAND_cat  year_2-year_17 if HWD_mean>0&CWD_mean>0, vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(PROP_AREA_PARKLAND_cat==1) ci saving(tt1, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(PROP_AREA_PARKLAND_cat==2) ci saving(tt2, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(PROP_AREA_PARKLAND_cat==3) ci saving(tt3, replace)
+
+use "tt1.dta", clear
+gen PROP_AREA_PARKLAND_cat=1
+append using  "tt2.dta"
+replace PROP_AREA_PARKLAND_cat=2 if PROP_AREA_PARKLAND_cat==.
+append using  "tt3.dta"
+replace PROP_AREA_PARKLAND_cat=3 if PROP_AREA_PARKLAND_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
+replace j=j+2
+rename j CWD_mean
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.13) by(PROP_AREA_PARKLAND_cat)
+		
+		
+/// 9				
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+regress propfuelpay_eq_p c.(HWN_1 HWN_2)##c.CWN##i.PROP_AREA_PARKLAND_cat year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(PROP_AREA_PARKLAND_cat==1) ci saving(uu1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(PROP_AREA_PARKLAND_cat==2) ci saving(uu2, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(PROP_AREA_PARKLAND_cat==3) ci saving(uu3, replace)
+
+use "uu1.dta", clear
+gen PROP_AREA_PARKLAND_cat=1
+append using  "uu2.dta"
+replace PROP_AREA_PARKLAND_cat=2 if PROP_AREA_PARKLAND_cat==.
+append using  "uu3.dta"
+replace PROP_AREA_PARKLAND_cat=3 if PROP_AREA_PARKLAND_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.05) by(PROP_AREA_PARKLAND_cat)
+		
+
+/// 10		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+logit fuel10_eq c.(HWN_1 HWN_2)##c.CWN##i.PROP_AREA_PARKLAND_cat year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(PROP_AREA_PARKLAND_cat==1) ci saving(vv1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(PROP_AREA_PARKLAND_cat==2) ci saving(vv2, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(PROP_AREA_PARKLAND_cat==3) ci saving(vv3, replace)
+
+use "vv1.dta", clear
+gen PROP_AREA_PARKLAND_cat=1
+append using  "vv2.dta"
+replace PROP_AREA_PARKLAND_cat=2 if PROP_AREA_PARKLAND_cat==.
+append using  "vv3.dta"
+replace PROP_AREA_PARKLAND_cat=3 if PROP_AREA_PARKLAND_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.08) by(PROP_AREA_PARKLAND_cat)
+		
+		
+/// 11		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+logit fuel_poor_lihc c.(HWN_1 HWN_2)##c.CWN##i.PROP_AREA_PARKLAND_cat year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(PROP_AREA_PARKLAND_cat==1) ci saving(ww1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(PROP_AREA_PARKLAND_cat==2) ci saving(ww2, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(PROP_AREA_PARKLAND_cat==3) ci saving(ww3, replace)
+
+use "ww1.dta", clear
+gen PROP_AREA_PARKLAND_cat=1
+append using  "ww2.dta"
+replace PROP_AREA_PARKLAND_cat=2 if PROP_AREA_PARKLAND_cat==.
+append using  "ww3.dta"
+replace PROP_AREA_PARKLAND_cat=3 if PROP_AREA_PARKLAND_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.12) by(PROP_AREA_PARKLAND_cat)
+
+
+		
+/// 12	
+use "energy_poverty.dta", clear
+fracgen HWN 2 3
+fracgen CWN 3 3
+
+logit bills_unable c.(HWN_1 HWN_2)##c.(CWN_1 CWN_2)##i.PROP_AREA_PARKLAND_cat  year_2-year_17 , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(PROP_AREA_PARKLAND_cat==1) ci saving(xx1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(PROP_AREA_PARKLAND_cat==2) ci saving(xx2, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(PROP_AREA_PARKLAND_cat==3) ci saving(xx3, replace)
+
+use "xx1.dta", clear
+gen PROP_AREA_PARKLAND_cat=1
+append using  "xx2.dta"
+replace PROP_AREA_PARKLAND_cat=2 if PROP_AREA_PARKLAND_cat==.
+append using  "xx3.dta"
+replace PROP_AREA_PARKLAND_cat=3 if PROP_AREA_PARKLAND_cat==.
+		
+reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+		
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
+
+
+
+
+
+
+
+use "energy_poverty.dta", clear
+fracgen max_temp 1
+fracgen min_temp 3 3
+
+regress propfuelpay_eq_p c.max_temp##c.(min_te_1 min_te_2)##i.renewable_area_rate_cat year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==1) ci saving(yy1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==2) ci saving(yy2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==3) ci saving(yy3, replace)
+
+use "yy1.dta", clear
+gen renewable_area_rate_cat=1
+append using  "yy2.dta"
+replace renewable_area_rate_cat=2 if renewable_area_rate_cat==.
+append using  "yy3.dta"
+replace renewable_area_rate_cat=3 if renewable_area_rate_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.06) by(renewable_area_rate_cat)
+
+
+/// 2		
+use "energy_poverty.dta", clear
+fracgen max_temp 1
+fracgen min_temp 3 3
+
+logit fuel10_eq c.max_temp##c.(min_te_1 min_te_2)##i.renewable_area_rate_cat year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==1) ci saving(zz1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==2) ci saving(zz2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==3) ci saving(zz3, replace)
+
+use "zz1.dta", clear
+gen renewable_area_rate_cat=1
+append using  "zz2.dta"
+replace renewable_area_rate_cat=2 if renewable_area_rate_cat==.
+append using  "zz3.dta"
+replace renewable_area_rate_cat=3 if renewable_area_rate_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
+				
+use "energy_poverty.dta", clear
+fracgen max_temp -1 -1
+fracgen min_temp 0 0
+
+logit fuel_poor_lihc c.max_temp##c.(min_te_1 min_te_2)##i.renewable_area_rate_cat year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==1) ci saving(ab1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==2) ci saving(ab2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==3) ci saving(ab3, replace)
+
+use "ab1.dta", clear
+gen renewable_area_rate_cat=1
+append using  "ab2.dta"
+replace renewable_area_rate_cat=2 if renewable_area_rate_cat==.
+append using  "ab3.dta"
+replace renewable_area_rate_cat=3 if renewable_area_rate_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
+
+				
+use "energy_poverty.dta", clear
+fracgen max_temp -.5 -.5
+fracgen min_temp 1
+
+logit bills_unable c.min_temp##c.(max_te_1 max_te_2)##i.renewable_area_rate_cat year_2-year_17  , vce (cluster ID)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==1) ci saving(ac1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==2) ci saving(ac2, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==3) ci saving(ac3, replace)
+
+use "ac1.dta", clear
+gen renewable_area_rate_cat=1
+append using  "ac2.dta"
+replace renewable_area_rate_cat=2 if renewable_area_rate_cat==.
+append using  "ac3.dta"
+replace renewable_area_rate_cat=3 if renewable_area_rate_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
+replace j=5 if j==1
+replace j=7 if j==2
+replace j=9 if j==3
+replace j=11 if j==4
+replace j=13 if j==5
+replace j=15 if j==6
+replace j=17 if j==7
+replace j=19 if j==8
+rename j min_temp
+
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.16) by(renewable_area_rate_cat)
+
+				
+use "energy_poverty.dta", clear
+fracgen HWD_mean 1
+fracgen CWD_mean 3 3
+
+regress propfuelpay_eq_p c.HWD_mean##c.(CWD_me_1 CWD_me_2)##i.renewable_area_rate_cat year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(renewable_area_rate_cat==1) ci saving(ad1, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(renewable_area_rate_cat==2) ci saving(ad2, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(renewable_area_rate_cat==3) ci saving(ad3, replace)
+
+use "ad1.dta", clear
+gen renewable_area_rate_cat=1
+append using  "ad2.dta"
+replace renewable_area_rate_cat=2 if renewable_area_rate_cat==.
+append using  "ad3.dta"
+replace renewable_area_rate_cat=3 if renewable_area_rate_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
+replace j=j+2
+rename j CWD_mean
+
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.05) by(renewable_area_rate_cat)
+		
+		
+use "energy_poverty.dta", clear
+fracgen HWD_mean 2 3
+fracgen CWD_mean 3 3
+
+logit fuel10_eq c.(HWD_me_1 HWD_me_2)##c.(CWD_me_1 CWD_me_2)##i.renewable_area_rate_cat year_2-year_17, vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(renewable_area_rate_cat==1) ci saving(ae1, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(renewable_area_rate_cat==2) ci saving(ae2, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean (CWD_me_1 CWD_me_2), at1(3(1)7) at2(3(1)7) at(renewable_area_rate_cat==3) ci saving(ae3, replace)
+
+use "ae1.dta", clear
+gen renewable_area_rate_cat=1
+append using  "ae2.dta"
+replace renewable_area_rate_cat=2 if renewable_area_rate_cat==.
+append using  "ae3.dta"
+replace renewable_area_rate_cat=3 if renewable_area_rate_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
+replace j=j+2
+rename j CWD_mean
+
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.1) by(renewable_area_rate_cat)
+
+			
+use "energy_poverty.dta", clear
+fracgen HWD_mean 2 2
+fracgen CWD_mean 1
+
+logit fuel_poor_lihc c.(HWD_me_1 HWD_me_2)##c.CWD_mean##i.renewable_area_rate_cat year_2-year_17  , vce (cluster ID)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(renewable_area_rate_cat==1) ci saving(af1, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(renewable_area_rate_cat==2) ci saving(af2, replace)
+marginscontplot HWD_mean (HWD_me_1 HWD_me_2) CWD_mean , at1(3(1)7) at2(3(1)7) at(renewable_area_rate_cat==3) ci saving(af3, replace)
+
+use "af1.dta", clear
+gen renewable_area_rate_cat=1
+append using  "af2.dta"
+replace renewable_area_rate_cat=2 if renewable_area_rate_cat==.
+append using  "af3.dta"
+replace renewable_area_rate_cat=3 if renewable_area_rate_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
+replace j=j+2
+rename j CWD_mean
+		
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.12) by(renewable_area_rate_cat)
+		
+				
+use "energy_poverty.dta", clear
+fracgen HWD_mean 1
+fracgen CWD_mean -2
+
+logit bills_unable c.(HWD_mean)##c.CWD_me_1##i.renewable_area_rate_cat  year_2-year_17 , vce (cluster ID)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(renewable_area_rate_cat==1) ci saving(ag1, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(renewable_area_rate_cat==2) ci saving(ag2, replace)
+marginscontplot HWD_mean CWD_mean (CWD_me_1 ), at1(3(1)7) at2(3(1)7) at(renewable_area_rate_cat==3) ci saving(ag3, replace)
+
+use "ag1.dta", clear
+gen renewable_area_rate_cat=1
+append using  "ag2.dta"
+replace renewable_area_rate_cat=2 if renewable_area_rate_cat==.
+append using  "ag3.dta"
+replace renewable_area_rate_cat=3 if renewable_area_rate_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
+replace j=j+2
+rename j CWD_mean
+
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.16) by(renewable_area_rate_cat)
+		
+						
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+regress propfuelpay_eq_p c.(HWN_1 HWN_2)##c.CWN##i.renewable_area_rate_cat year_2-year_17  , vce (cluster ID)
+sum CWN , de
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(renewable_area_rate_cat==1) ci saving(ah1, replace)
+sum CWN , de
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(renewable_area_rate_cat==2) ci saving(ah2, replace)
+sum CWN , de
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(renewable_area_rate_cat==3) ci saving(ah3, replace)
+
+use "ah1.dta", clear
+gen renewable_area_rate_cat=1
+append using  "ah2.dta"
+replace renewable_area_rate_cat=2 if renewable_area_rate_cat==.
+append using  "ah3.dta"
+replace renewable_area_rate_cat=3 if renewable_area_rate_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+		
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.05) by(renewable_area_rate_cat)
+
+
+/// 10		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+logit fuel10_eq c.(HWN_1 HWN_2)##c.CWN##i.renewable_area_rate_cat year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(renewable_area_rate_cat==1) ci saving(ai1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(renewable_area_rate_cat==2) ci saving(ai2, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(renewable_area_rate_cat==3) ci saving(ai3, replace)
+
+use "ai1.dta", clear
+gen renewable_area_rate_cat=1
+append using  "ai2.dta"
+replace renewable_area_rate_cat=2 if renewable_area_rate_cat==.
+append using  "ai3.dta"
+replace renewable_area_rate_cat=3 if renewable_area_rate_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.1) by(renewable_area_rate_cat)
+		
+		
+/// 11		
+use "energy_poverty.dta", clear
+fracgen HWN 2 2
+fracgen CWN 1
+
+logit fuel_poor_lihc c.(HWN_1 HWN_2)##c.CWN##i.renewable_area_rate_cat year_2-year_17  , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(renewable_area_rate_cat==1) ci saving(aj1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(renewable_area_rate_cat==2) ci saving(aj2, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN , at1(0(1)4) at2(0(1)4) at(renewable_area_rate_cat==3) ci saving(aj3, replace)
+
+use "aj1.dta", clear
+gen renewable_area_rate_cat=1
+append using  "aj2.dta"
+replace renewable_area_rate_cat=2 if renewable_area_rate_cat==.
+append using  "aj3.dta"
+replace renewable_area_rate_cat=3 if renewable_area_rate_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.12) by(renewable_area_rate_cat)
+
+			
+use "energy_poverty.dta", clear
+fracgen HWN 2 3
+fracgen CWN 3 3
+
+logit bills_unable c.(HWN_1 HWN_2)##c.(CWN_1 CWN_2)##i.renewable_area_rate_cat  year_2-year_17 , vce (cluster ID)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(renewable_area_rate_cat==1) ci saving(ak1, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(renewable_area_rate_cat==2) ci saving(ak2, replace)
+marginscontplot HWN (HWN_1 HWN_2) CWN (CWN_1 CWN_2 ), at1(0(1)4) at2(0(1)4) at(renewable_area_rate_cat==3) ci saving(ak3, replace)
+
+use "ak1.dta", clear
+gen renewable_area_rate_cat=1
+append using  "ak2.dta"
+replace renewable_area_rate_cat=2 if renewable_area_rate_cat==.
+append using  "ak3.dta"
+replace renewable_area_rate_cat=3 if renewable_area_rate_cat==.
+
+reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
+replace j=0 if j==1
+replace j=1 if j==2
+replace j=2 if j==3
+replace j=3 if j==4
+replace j=4 if j==5
+rename j CWN
+		
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
+
+
+
+******* prediction *********
+// future climatological data can be downloaded from https://www.climatechangeinaustralia.gov.au/en/obtain-data/download-datasets/
+use "rcp.dta", clear
+gen year= 2030 if CLIMATOLOGY=="2020-2039"
+replace year=2050 if CLIMATOLOGY=="2040-2059"
+replace year=2070 if CLIMATOLOGY=="2060-2079"
+replace year=2090 if CLIMATOLOGY=="2080-2099"
+rename taxmax max_temp
+rename taxmin min_temp
+save "rcp_add.dta", replace
+
+use "energy_poverty.dta", clear
+append using "rcp_add.dta"
+
+
+fgen max_temp_1=max_temp-23.3842633
+fgen min_temp_1=(min_temp/10)^3-2.075045069
+fgen min_temp_2=(min_temp/10)^3*ln(min_temp/10)-.5049157875 
+
+regress propfuelpay_eq_p c.(max_temp_1)##c.(min_temp_1 min_temp_2) o.max_temp o.min_temp i.year , vce (cluster lga_code)
+predict propfuelpay_eq_p_pred
+
+
+logit fuel10_eq c.(max_temp_1)##c.(min_temp_1 min_temp_2) o.max_temp o.min_temp i.year  , vce (cluster lga_code)
+predict fuel10_eq_pred	
+
+		
+fgen max_temp_3=(max_temp/10)^-1-.427662763
+fgen max_temp_4=(max_temp/10)^-1*ln(max_temp/10)-.3632654457
+fgen min_temp_3=ln(min_temp/10)-.2430375762
+fgen min_temp_4=ln(min_temp/10)^2-.0590672634
+
+logit fuel_poor_lihc c.(max_temp_3 max_temp_4)##c.(min_temp_3 min_temp_4) o.max_temp o.min_temp i.year , vce (cluster lga_code)
+predict fuel_poor_lihc_pred
+
+		
+		
+fgen max_temp_5=(max_temp/10)^-.5-.6540476777
+fgen max_temp_6=(max_temp/10)^-.5*ln(max_temp/10)-.5553846228
+fgen min_temp_5=min_temp-12.75005795
+
+logit bills_unable c.(min_temp_5)##c.(max_temp_5 max_temp_6) o.max_temp o.min_temp i.year , vce (cluster lga_code)
+predict bills_unable_pred
+
+
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+eststo M1
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+eststo M2
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+eststo M3
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CanESM2"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+eststo M4
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+eststo M5
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+eststo M6
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="MIROC5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+eststo M7
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+eststo M8
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+eststo M9
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+eststo M10
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+eststo M11
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CanESM2"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+eststo M12
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+eststo M13
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+eststo M14
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="MIROC5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+eststo M15
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+eststo M16
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+eststo M17
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+eststo M18
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+eststo M19
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CanESM2"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+eststo M20
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+eststo M21
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+eststo M22
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="MIROC5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+eststo M23
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+eststo M24
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+eststo M25
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+eststo M26
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+eststo M27
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CanESM2"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+eststo M28
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+eststo M29
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+eststo M30
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="MIROC5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+eststo M31
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+eststo M32
+
+esttab M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12 M13 M14 M15 M16 M17 M18 M19 M20 M21 M22 M23 M24 M25 M26 M27 M28 M29 M30 M31 M32 using "stat1.csv", replace cells("mean(fmt(%12.4f))")
+
+
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+eststo M1
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+eststo M2
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+eststo M3
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CanESM2"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+eststo M4
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+eststo M5
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+eststo M6
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="MIROC5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+eststo M7
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+eststo M8
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+eststo M9
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+eststo M10
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+eststo M11
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CanESM2"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+eststo M12
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+eststo M13
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+eststo M14
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="MIROC5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+eststo M15
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+eststo M16
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+eststo M17
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+eststo M18
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+eststo M19
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CanESM2"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+eststo M20
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+eststo M21
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+eststo M22
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="MIROC5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+eststo M23
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+eststo M24
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+eststo M25
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+eststo M26
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+eststo M27
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CanESM2"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+eststo M28
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+eststo M29
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+eststo M30
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="MIROC5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+eststo M31
+estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+eststo M32
+
+esttab M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12 M13 M14 M15 M16 M17 M18 M19 M20 M21 M22 M23 M24 M25 M26 M27 M28 M29 M30 M31 M32 using "stat2.csv", replace cells("mean(fmt(%12.4f))")
+
