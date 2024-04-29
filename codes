@@ -1,3 +1,4 @@
+// HILDA is available from https://dataverse.ada.edu.au/dataverse/hilda
 ******************* Variable construction ***************
 * sex
 gen Female=hgsex==2
