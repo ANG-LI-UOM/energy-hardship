@@ -3655,24 +3655,10 @@ fgen max_temp_1=max_temp-23.3842633
 fgen min_temp_1=(min_temp/10)^3-2.075045069
 fgen min_temp_2=(min_temp/10)^3*ln(min_temp/10)-.5049157875 
 
-regress propfuelpay_eq_p c.(max_temp_1)##c.(min_temp_1 min_temp_2) o.max_temp o.min_temp i.year , vce (cluster lga_code)
-predict propfuelpay_eq_p_pred
-
-
 logit fuel10_eq c.(max_temp_1)##c.(min_temp_1 min_temp_2) o.max_temp o.min_temp i.year  , vce (cluster lga_code)
 predict fuel10_eq_pred	
 
-		
-fgen max_temp_3=(max_temp/10)^-1-.427662763
-fgen max_temp_4=(max_temp/10)^-1*ln(max_temp/10)-.3632654457
-fgen min_temp_3=ln(min_temp/10)-.2430375762
-fgen min_temp_4=ln(min_temp/10)^2-.0590672634
-
-logit fuel_poor_lihc c.(max_temp_3 max_temp_4)##c.(min_temp_3 min_temp_4) o.max_temp o.min_temp i.year , vce (cluster lga_code)
-predict fuel_poor_lihc_pred
-
-		
-		
+			
 fgen max_temp_5=(max_temp/10)^-.5-.6540476777
 fgen max_temp_6=(max_temp/10)^-.5*ln(max_temp/10)-.5553846228
 fgen min_temp_5=min_temp-12.75005795
@@ -3681,137 +3667,137 @@ logit bills_unable c.(min_temp_5)##c.(max_temp_5 max_temp_6) o.max_temp o.min_te
 predict bills_unable_pred
 
 
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
 eststo M1
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
 eststo M2
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
 eststo M3
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CanESM2"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CanESM2"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
 eststo M4
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
 eststo M5
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
 eststo M6
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="MIROC5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="MIROC5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
 eststo M7
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
 eststo M8
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
 eststo M9
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
 eststo M10
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
 eststo M11
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CanESM2"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CanESM2"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
 eststo M12
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
 eststo M13
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
 eststo M14
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="MIROC5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="MIROC5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
 eststo M15
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
 eststo M16
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
 eststo M17
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
 eststo M18
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
 eststo M19
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CanESM2"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CanESM2"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
 eststo M20
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
 eststo M21
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
 eststo M22
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="MIROC5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="MIROC5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
 eststo M23
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
 eststo M24
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
 eststo M25
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
 eststo M26
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
 eststo M27
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CanESM2"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="CanESM2"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
 eststo M28
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
 eststo M29
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
 eststo M30
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="MIROC5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="MIROC5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
 eststo M31
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp45"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
 eststo M32
 
 esttab M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12 M13 M14 M15 M16 M17 M18 M19 M20 M21 M22 M23 M24 M25 M26 M27 M28 M29 M30 M31 M32 using "stat1.csv", replace cells("mean(fmt(%12.4f))")
 
 
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
 eststo M1
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
 eststo M2
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
 eststo M3
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CanESM2"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CanESM2"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
 eststo M4
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
 eststo M5
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
 eststo M6
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="MIROC5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="MIROC5"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
 eststo M7
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2020-2039", columns(statistics) stat(mean)
 eststo M8
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
 eststo M9
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
 eststo M10
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
 eststo M11
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CanESM2"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CanESM2"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
 eststo M12
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
 eststo M13
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
 eststo M14
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="MIROC5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="MIROC5"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
 eststo M15
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2040-2059", columns(statistics) stat(mean)
 eststo M16
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
 eststo M17
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
 eststo M18
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
 eststo M19
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CanESM2"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CanESM2"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
 eststo M20
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
 eststo M21
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
 eststo M22
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="MIROC5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="MIROC5"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
 eststo M23
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2060-2079", columns(statistics) stat(mean)
 eststo M24
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="ACCESS1-0"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
 eststo M25
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CESM1-CAM5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
 eststo M26
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CNRM-CM5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
 eststo M27
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CanESM2"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="CanESM2"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
 eststo M28
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="GFDL-ESM2M"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
 eststo M29
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="HadGEM2-CC"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
 eststo M30
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="MIROC5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="MIROC5"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
 eststo M31
-estpost tabstat  propfuelpay_eq_p_pred fuel10_eq_pred fuel_poor_lihc_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
+estpost tabstat  fuel10_eq_pred bills_unable_pred  if RCP=="rcp85"&MODEL=="NorESM1-M"&CLIMATOLOGY=="2080-2099", columns(statistics) stat(mean)
 eststo M32
 
 esttab M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12 M13 M14 M15 M16 M17 M18 M19 M20 M21 M22 M23 M24 M25 M26 M27 M28 M29 M30 M31 M32 using "stat2.csv", replace cells("mean(fmt(%12.4f))")
