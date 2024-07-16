@@ -323,7 +323,7 @@ est sto model28
 
 
 		
-******************* stratification using heatmap *****************
+******************* stratification heatmap *****************
 use "energy_poverty.dta", clear
 //mfpigen,  linadj(year_2-year_17 ): regress propfuelpay_eq_p  min_temp max_temp , vce (cluster ID)
 fracgen max_temp 1
