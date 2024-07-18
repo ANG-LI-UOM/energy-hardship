@@ -523,7 +523,7 @@ reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.1) by(NCCClimateZone2) saving("climate6.gph", replace) 
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate6.gph", replace) 
 
 		
 /// 7		
@@ -616,7 +616,7 @@ replace j=4 if j==5
 
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.05) by(NCCClimateZone2) saving("climate9.gph", replace) 
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.06) by(NCCClimateZone2) saving("climate9.gph", replace) 
 
 
 
@@ -648,7 +648,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.12) by(NCCClimateZone2) saving("climate10.gph", replace) 
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate10.gph", replace) 
 		
 
 /// 11		
@@ -711,7 +711,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.2) by(NCCClimateZone2) saving("climate12.gph", replace) 
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate12.gph", replace) 
 		
 
 		
@@ -935,7 +935,7 @@ reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.1) by(HH_struc2) saving("hh6.gph", replace) 
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh6.gph", replace) 
 
 		
 /// 7		
@@ -1037,7 +1037,7 @@ replace j=4 if j==5
 
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.05) by(HH_struc2) saving("hh9.gph", replace)
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.06) by(HH_struc2) saving("hh9.gph", replace)
 
 
 
@@ -1072,7 +1072,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.12) by(HH_struc2) saving("hh10.gph", replace) 
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh10.gph", replace) 
 		
 
 /// 11		
@@ -1141,7 +1141,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.2) by(HH_struc2) saving("hh12.gph", replace) 
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh12.gph", replace) 
 
 
 
@@ -1242,7 +1242,7 @@ label var _margin "Risk of >10% energy expense"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.12) by(AgeC3)
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(AgeC3)
 
 
 		
@@ -1287,7 +1287,7 @@ label var _margin "Risk of LIHC"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.12) by(AgeC3) saving("age_3.gph", replace)
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(AgeC3) saving("age_3.gph", replace)
 
 		
 /// 4		
@@ -1404,7 +1404,7 @@ label var _margin "Risk of >10% energy expense"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.11) by(AgeC3)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(AgeC3)
 		
 		
 /// 7		
@@ -1477,7 +1477,7 @@ label var _margin "Risk of utility bill arrear"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.15) by(AgeC3)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(AgeC3)
 		
 		
 /// 9		
@@ -1517,7 +1517,7 @@ label var _margin "Proportion of energy expense"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.05) by(AgeC3)
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.06) by(AgeC3)
 
 
 
@@ -1558,7 +1558,7 @@ label var _margin "Risk of >10% energy expense"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.1) by(AgeC3)
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(AgeC3)
 		
 		
 /// 11		
@@ -1638,7 +1638,7 @@ label var _margin "Risk of utility bill arrear"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.16) by(AgeC3)
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(AgeC3)
 	
 
 
@@ -1711,7 +1711,7 @@ label var _margin "Risk of >10% energy expense"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(home_satisfaction_dis) saving("dwel2.gph", replace)
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(home_satisfaction_dis) saving("dwel2.gph", replace)
 
 		
 /// 3		
@@ -1745,7 +1745,7 @@ label var _margin "Risk of LIHC"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 		
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(home_satisfaction_dis) saving("dwel3.gph", replace)
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(home_satisfaction_dis) saving("dwel3.gph", replace)
 
 
 
@@ -1780,7 +1780,7 @@ label var _margin "Risk of utility bill arrear"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 		
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(home_satisfaction_dis) saving("dwel4.gph", replace)
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(home_satisfaction_dis) saving("dwel4.gph", replace)
 		
 		
 		
@@ -1808,7 +1808,7 @@ label var _margin "Proportion of energy expense"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.05) by(home_satisfaction_dis) saving("dwel5.gph", replace) 
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.06) by(home_satisfaction_dis) saving("dwel5.gph", replace) 
 
 		
 /// 6
@@ -1835,7 +1835,7 @@ label var _margin "Risk of >10% energy expense"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.08) by(home_satisfaction_dis) saving("dwel6.gph", replace) 
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.14) by(home_satisfaction_dis) saving("dwel6.gph", replace) 
 
 
 		
@@ -1863,7 +1863,7 @@ label var _margin "Risk of LIHC"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.13) by(home_satisfaction_dis) saving("dwel7.gph", replace) 
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis) saving("dwel7.gph", replace) 
 
 
 		
@@ -1891,7 +1891,7 @@ label var _margin "Risk of utility bill arrear"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.25) by(home_satisfaction_dis) saving("dwel8.gph", replace) 
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis) saving("dwel8.gph", replace) 
 		
 		
 		
@@ -1923,7 +1923,7 @@ label var _margin "Proportion of energy expense"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.05) by(home_satisfaction_dis) saving("dwel9.gph", replace) 
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.06) by(home_satisfaction_dis) saving("dwel9.gph", replace) 
 
 		
 /// 10
@@ -1954,7 +1954,7 @@ label var _margin "Risk of >10% energy expense"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.1) by(home_satisfaction_dis)
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 		
 		
 /// 11		
@@ -2080,7 +2080,7 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(home_satisfaction_dis)
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 
 		
 /// 3		
@@ -2108,7 +2108,7 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 		
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(home_satisfaction_dis)
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 
 
 
@@ -2137,7 +2137,7 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 		
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(home_satisfaction_dis)
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 		
 		
 		
@@ -2159,7 +2159,7 @@ reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.05) by(home_satisfaction_dis)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.06) by(home_satisfaction_dis)
 
 		
 /// 6
@@ -2180,7 +2180,7 @@ reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.08) by(home_satisfaction_dis)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.14) by(home_satisfaction_dis)
 
 
 		
@@ -2202,7 +2202,7 @@ reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.13) by(home_satisfaction_dis)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 
 
 		
@@ -2224,7 +2224,7 @@ reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.25) by(home_satisfaction_dis)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 		
 		
 		
@@ -2250,7 +2250,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.05) by(home_satisfaction_dis)
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.06) by(home_satisfaction_dis)
 
 		
 /// 10
@@ -2275,7 +2275,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.1) by(home_satisfaction_dis)
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 		
 		
 /// 11		
@@ -2443,7 +2443,7 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 		
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2)
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14)
 		
 
 
@@ -2465,7 +2465,7 @@ reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.05) by(owner)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.06) by(owner)
 
 
 
@@ -2487,7 +2487,7 @@ reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.08) by(owner)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(owner)
 
 
 		
@@ -2509,7 +2509,7 @@ reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.12) by(owner)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(owner)
 
 		
 /// 8		
@@ -2530,7 +2530,7 @@ reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.2) by(owner)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(owner)
 		
 		
 		
@@ -2557,7 +2557,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.002)0.05) by(owner)
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.002)0.06) by(owner)
 
 
 		
@@ -2583,7 +2583,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.08) by(owner)
+heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(owner)
 		
 		
 /// 11		
@@ -2634,7 +2634,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.12) by(owner)
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(owner)
 
 		
 		
@@ -2673,7 +2673,7 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.07) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.06) by(PROP_AREA_PARKLAND_cat)
 	
 	
 	
@@ -2706,7 +2706,7 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(PROP_AREA_PARKLAND_cat) 
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat) 
 		
 /// 3		
 use "energy_poverty.dta", clear
@@ -2737,7 +2737,7 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
 
 
 		
@@ -2770,7 +2770,7 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 	
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
 
 
 /// 5
@@ -2794,7 +2794,7 @@ reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.055) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.06) by(PROP_AREA_PARKLAND_cat)
 		
 		
 /// 6
@@ -2818,7 +2818,7 @@ reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.08) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
 
 		
 /// 7		
@@ -2843,7 +2843,7 @@ reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.11) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
 
 
 		
@@ -2868,7 +2868,7 @@ reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.13) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
 		
 		
 /// 9				
@@ -2896,7 +2896,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.05) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.06) by(PROP_AREA_PARKLAND_cat)
 		
 
 /// 10		
@@ -2924,7 +2924,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.08) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
 		
 		
 /// 11		
@@ -2952,7 +2952,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.12) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
 
 
 		
@@ -3106,7 +3106,7 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.16) by(renewable_area_rate_cat)
+heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
 
 				
 use "energy_poverty.dta", clear
@@ -3129,7 +3129,7 @@ reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.05) by(renewable_area_rate_cat)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.06) by(renewable_area_rate_cat)
 		
 		
 use "energy_poverty.dta", clear
@@ -3152,7 +3152,7 @@ reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.1) by(renewable_area_rate_cat)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
 
 			
 use "energy_poverty.dta", clear
@@ -3175,7 +3175,7 @@ reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.12) by(renewable_area_rate_cat)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
 		
 				
 use "energy_poverty.dta", clear
@@ -3198,7 +3198,7 @@ reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.16) by(renewable_area_rate_cat)
+heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
 		
 						
 use "energy_poverty.dta", clear
@@ -3228,7 +3228,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.05) by(renewable_area_rate_cat)
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.06) by(renewable_area_rate_cat)
 
 
 /// 10		
@@ -3256,7 +3256,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.1) by(renewable_area_rate_cat)
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
 		
 		
 /// 11		
@@ -3284,7 +3284,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.12) by(renewable_area_rate_cat)
+heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
 
 			
 use "energy_poverty.dta", clear
