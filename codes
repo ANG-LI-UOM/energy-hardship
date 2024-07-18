@@ -330,10 +330,10 @@ fracgen max_temp 1
 fracgen min_temp 3 3
 
 regress propfuelpay_eq_p c.max_temp##c.(min_te_1 min_te_2)##i.NCCClimateZone2 year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(24(2)36) at2(4(2)16) at(NCCClimateZone2==1) ci saving(g1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==2) ci saving(g2, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==3) ci saving(g3, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==4) ci saving(g4, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(NCCClimateZone2==1) ci saving(g1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(NCCClimateZone2==2) ci saving(g2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(NCCClimateZone2==3) ci saving(g3, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(NCCClimateZone2==4) ci saving(g4, replace)
 
 use "g1.dta", clear
 gen NCCClimateZone2=1
@@ -365,10 +365,10 @@ fracgen max_temp 1
 fracgen min_temp 3 3
 
 logit fuel10_eq c.max_temp##c.(min_te_1 min_te_2)##i.NCCClimateZone2 year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(24(2)36) at2(4(2)16) at(NCCClimateZone2==1) ci saving(a1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==2) ci saving(a2, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==3) ci saving(a3, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==4) ci saving(a4, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(NCCClimateZone2==1) ci saving(a1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(NCCClimateZone2==2) ci saving(a2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(NCCClimateZone2==3) ci saving(a3, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(NCCClimateZone2==4) ci saving(a4, replace)
 
 use "a1.dta", clear
 gen NCCClimateZone2=1
@@ -401,10 +401,10 @@ fracgen max_temp -1 -1
 fracgen min_temp 0 0
 
 logit fuel_poor_lihc c.(max_te_1 max_te_2)##c.(min_te_1 min_te_2)##i.NCCClimateZone2 year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(24(2)36) at2(4(2)16) at(NCCClimateZone2==1) ci saving(b1, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==2) ci saving(b2, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==3) ci saving(b3, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==4) ci saving(b4, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(NCCClimateZone2==1) ci saving(b1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(NCCClimateZone2==2) ci saving(b2, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(NCCClimateZone2==3) ci saving(b3, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(NCCClimateZone2==4) ci saving(b4, replace)
 
 use "b1.dta", clear
 gen NCCClimateZone2=1
@@ -436,10 +436,10 @@ fracgen max_temp -.5 -.5
 fracgen min_temp 1
 
 logit bills_unable c.min_temp##c.(max_te_1 max_te_2)##i.NCCClimateZone2 year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(24(2)36) at2(4(2)16) at(NCCClimateZone2==1) ci saving(c1, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==2) ci saving(c2, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==3) ci saving(c3, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(NCCClimateZone2==4) ci saving(c4, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(NCCClimateZone2==1) ci saving(c1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(NCCClimateZone2==2) ci saving(c2, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(NCCClimateZone2==3) ci saving(c3, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(NCCClimateZone2==4) ci saving(c4, replace)
 
 use "c1.dta", clear
 gen NCCClimateZone2=1
@@ -721,11 +721,11 @@ fracgen max_temp 1
 fracgen min_temp 3 3
 
 regress propfuelpay_eq_p c.max_temp##c.(min_te_1 min_te_2)##i.HH_struc2 year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(24(2)36) at2(4(2)16) at(HH_struc2==1) ci saving(gx1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==2) ci saving(gx2, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==3) ci saving(gx3, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==4) ci saving(gx4, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==5) ci saving(gx5, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(4(2)16) at(HH_struc2==1) ci saving(gx1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(4(2)16) at(HH_struc2==2) ci saving(gx2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(4(2)16) at(HH_struc2==3) ci saving(gx3, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(4(2)16) at(HH_struc2==4) ci saving(gx4, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(4(2)16) at(HH_struc2==5) ci saving(gx5, replace)
 
 use "gx1.dta", clear
 gen HH_struc2=1
@@ -760,11 +760,11 @@ fracgen max_temp 1
 fracgen min_temp 3 3
 
 logit fuel10_eq c.max_temp##c.(min_te_1 min_te_2)##i.HH_struc2 year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(24(2)36) at2(4(2)16) at(HH_struc2==1) ci saving(ax1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==2) ci saving(ax2, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==3) ci saving(ax3, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==4) ci saving(ax4, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==5) ci saving(ax5, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(HH_struc2==1) ci saving(ax1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(HH_struc2==2) ci saving(ax2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(HH_struc2==3) ci saving(ax3, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(HH_struc2==4) ci saving(ax4, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(HH_struc2==5) ci saving(ax5, replace)
 
 use "ax1.dta", clear
 gen HH_struc2=1
@@ -799,11 +799,11 @@ fracgen max_temp -1 -1
 fracgen min_temp 0 0
 
 logit fuel_poor_lihc c.(max_te_1 max_te_2)##c.(min_te_1 min_te_2)##i.HH_struc2 year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(24(2)36) at2(4(2)16) at(HH_struc2==1) ci saving(bx1, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==2) ci saving(bx2, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==3) ci saving(bx3, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==4) ci saving(bx4, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(HH_struc2==5) ci saving(bx5, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(HH_struc2==1) ci saving(bx1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(HH_struc2==2) ci saving(bx2, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(HH_struc2==3) ci saving(bx3, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(HH_struc2==4) ci saving(bx4, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(HH_struc2==5) ci saving(bx5, replace)
 
 use "bx1.dta", clear
 gen HH_struc2=1
@@ -837,11 +837,11 @@ fracgen max_temp -.5 -.5
 fracgen min_temp 1
 
 logit bills_unable c.min_temp##c.(max_te_1 max_te_2)##i.HH_struc2 year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(24(2)36) at2(4(2)16) at(HH_struc2==1) ci saving(cx1, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(HH_struc2==2) ci saving(cx2, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(HH_struc2==3) ci saving(cx3, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(HH_struc2==4) ci saving(cx4, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(HH_struc2==5) ci saving(cx5, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(HH_struc2==1) ci saving(cx1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(HH_struc2==2) ci saving(cx2, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(HH_struc2==3) ci saving(cx3, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(HH_struc2==4) ci saving(cx4, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(HH_struc2==5) ci saving(cx5, replace)
 
 use "cx1.dta", clear
 gen HH_struc2=1
@@ -1163,11 +1163,11 @@ fracgen max_temp 1
 fracgen min_temp 3 3
 
 regress propfuelpay_eq_p c.max_temp##c.(min_te_1 min_te_2)##i.AgeC3 year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==1) ci saving(m11, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==2) ci saving(m21, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==3) ci saving(m31, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==4) ci saving(m41, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==5) ci saving(m51, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(AgeC3==1) ci saving(m11, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(AgeC3==2) ci saving(m21, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(AgeC3==3) ci saving(m31, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(AgeC3==4) ci saving(m41, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(AgeC3==5) ci saving(m51, replace)
 
 use "m11.dta", clear
 gen AgeC3=1
@@ -1208,11 +1208,11 @@ fracgen max_temp 1
 fracgen min_temp 3 3
 
 logit fuel10_eq c.max_temp##c.(min_te_1 min_te_2)##i.AgeC3 year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==1) ci saving(n11, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==2) ci saving(n21, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==3) ci saving(n31, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==4) ci saving(n41, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==5) ci saving(n51, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(AgeC3==1) ci saving(n11, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(AgeC3==2) ci saving(n21, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(AgeC3==3) ci saving(n31, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(AgeC3==4) ci saving(n41, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(AgeC3==5) ci saving(n51, replace)
 
 use "n11.dta", clear
 gen AgeC3=1
@@ -1253,11 +1253,11 @@ fracgen max_temp -1 -1
 fracgen min_temp 0 0
 
 logit fuel_poor_lihc c.max_temp##c.(min_te_1 min_te_2)##i.AgeC3 year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==1) ci saving(o11, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==2) ci saving(o21, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==3) ci saving(o31, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==4) ci saving(o41, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(AgeC3==5) ci saving(o51, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(AgeC3==1) ci saving(o11, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(AgeC3==2) ci saving(o21, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(AgeC3==3) ci saving(o31, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(AgeC3==4) ci saving(o41, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(AgeC3==5) ci saving(o51, replace)
 
 use "o11.dta", clear
 gen AgeC3=1
@@ -1297,11 +1297,11 @@ fracgen max_temp -.5 -.5
 fracgen min_temp 1
 
 logit bills_unable c.min_temp##c.(max_te_1 max_te_2)##i.AgeC3 year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(AgeC3==1) ci saving(p11, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(AgeC3==2) ci saving(p21, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(AgeC3==3) ci saving(p31, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(AgeC3==4) ci saving(p41, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(AgeC3==5) ci saving(p51, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(AgeC3==1) ci saving(p11, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(AgeC3==2) ci saving(p21, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(AgeC3==3) ci saving(p31, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(AgeC3==4) ci saving(p41, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(AgeC3==5) ci saving(p51, replace)
 
 use "p11.dta", clear
 gen AgeC3=1
@@ -1652,8 +1652,8 @@ fracgen max_temp 1
 fracgen min_temp 3 3
 
 regress propfuelpay_eq_p c.max_temp##c.(min_te_1 min_te_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==1) ci saving(aa1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==0) ci saving(aa2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(home_satisfaction_dis==1) ci saving(aa1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(home_satisfaction_dis==0) ci saving(aa2, replace)
 
 use "aa1.dta", clear
 gen home_satisfaction_dis=1
@@ -1686,8 +1686,8 @@ fracgen max_temp 1
 fracgen min_temp 3 3
 
 logit fuel10_eq c.max_temp##c.(min_te_1 min_te_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==1) ci saving(bb1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==0) ci saving(bb2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(home_satisfaction_dis==1) ci saving(bb1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(home_satisfaction_dis==0) ci saving(bb2, replace)
 
 use "bb1.dta", clear
 gen home_satisfaction_dis=1
@@ -1720,8 +1720,8 @@ fracgen max_temp -1 -1
 fracgen min_temp 0 0
 
 logit fuel_poor_lihc c.max_temp##c.(min_te_1 min_te_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==1) ci saving(cc1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==0) ci saving(cc2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(home_satisfaction_dis==1) ci saving(cc1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(home_satisfaction_dis==0) ci saving(cc2, replace)
 
 use "cc1.dta", clear
 gen home_satisfaction_dis=1
@@ -1755,8 +1755,8 @@ fracgen max_temp -.5 -.5
 fracgen min_temp 1
 
 logit bills_unable c.min_temp##c.(max_te_1 max_te_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==1) ci saving(dd1, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==0) ci saving(dd2, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(home_satisfaction_dis==1) ci saving(dd1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(home_satisfaction_dis==0) ci saving(dd2, replace)
 
 use "dd1.dta", clear
 gen home_satisfaction_dis=1
@@ -2033,8 +2033,8 @@ fracgen max_temp 1
 fracgen min_temp 3 3
 
 regress propfuelpay_eq_p c.max_temp##c.(min_te_1 min_te_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==1) ci saving(aa1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==0) ci saving(aa2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(home_satisfaction_dis==1) ci saving(aa1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(home_satisfaction_dis==0) ci saving(aa2, replace)
 
 use "aa1.dta", clear
 gen home_satisfaction_dis=1
@@ -2061,8 +2061,8 @@ fracgen max_temp 1
 fracgen min_temp 3 3
 
 logit fuel10_eq c.max_temp##c.(min_te_1 min_te_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==1) ci saving(bb1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==0) ci saving(bb2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(home_satisfaction_dis==1) ci saving(bb1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(home_satisfaction_dis==0) ci saving(bb2, replace)
 
 use "bb1.dta", clear
 gen home_satisfaction_dis=1
@@ -2089,8 +2089,8 @@ fracgen max_temp -1 -1
 fracgen min_temp 0 0
 
 logit fuel_poor_lihc c.max_temp##c.(min_te_1 min_te_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==1) ci saving(cc1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==0) ci saving(cc2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(home_satisfaction_dis==1) ci saving(cc1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(home_satisfaction_dis==0) ci saving(cc2, replace)
 
 use "cc1.dta", clear
 gen home_satisfaction_dis=1
@@ -2118,8 +2118,8 @@ fracgen max_temp -.5 -.5
 fracgen min_temp 1
 
 logit bills_unable c.min_temp##c.(max_te_1 max_te_2)##i.home_satisfaction_dis year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==1) ci saving(dd1, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(home_satisfaction_dis==0) ci saving(dd2, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(home_satisfaction_dis==1) ci saving(dd1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(home_satisfaction_dis==0) ci saving(dd2, replace)
 
 use "dd1.dta", clear
 gen home_satisfaction_dis=1
@@ -2340,8 +2340,8 @@ fracgen max_temp 1
 fracgen min_temp 3 3
 
 regress propfuelpay_eq_p c.max_temp##c.(min_te_1 min_te_2)##i.owner year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(owner==1) ci saving(ba1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(owner==0) ci saving(ba2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(owner==1) ci saving(ba1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(owner==0) ci saving(ba2, replace)
 
 use "ba1.dta", clear
 gen owner=1
@@ -2368,8 +2368,8 @@ fracgen max_temp 1
 fracgen min_temp 3 3
 
 logit fuel10_eq c.max_temp##c.(min_te_1 min_te_2)##i.owner year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(owner==1) ci saving(bc1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(owner==0) ci saving(bc2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(6(2)16) at(owner==1) ci saving(bc1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(6(2)16) at(owner==0) ci saving(bc2, replace)
 
 use "bc1.dta", clear
 gen owner=1
@@ -2396,8 +2396,8 @@ fracgen max_temp -1 -1
 fracgen min_temp 0 0
 
 logit fuel_poor_lihc c.max_temp##c.(min_te_1 min_te_2)##i.owner year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(owner==1) ci saving(bd1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(owner==0) ci saving(bd2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(owner==1) ci saving(bd1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(owner==0) ci saving(bd2, replace)
 
 use "bd1.dta", clear
 gen owner=1
@@ -2424,8 +2424,8 @@ fracgen max_temp -.5 -.5
 fracgen min_temp 1
 
 logit bills_unable c.min_temp##c.(max_te_1 max_te_2)##i.owner year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(owner==1) ci saving(be1, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(owner==0) ci saving(be2, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(owner==1) ci saving(be1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(owner==0) ci saving(be2, replace)
 
 use "be1.dta", clear
 gen owner=1
@@ -2651,9 +2651,9 @@ fracgen max_temp 1
 fracgen min_temp 3 3
 
 regress propfuelpay_eq_p c.max_temp##c.(min_te_1 min_te_2)##i.PROP_AREA_PARKLAND_cat year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==1) ci saving(mm1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==2) ci saving(mm2, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==3) ci saving(mm3, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(PROP_AREA_PARKLAND_cat==1) ci saving(mm1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(PROP_AREA_PARKLAND_cat==2) ci saving(mm2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(PROP_AREA_PARKLAND_cat==3) ci saving(mm3, replace)
 
 use "mm1.dta", clear
 gen PROP_AREA_PARKLAND_cat=1
@@ -2684,9 +2684,9 @@ fracgen max_temp 1
 fracgen min_temp 3 3
 
 logit fuel10_eq c.max_temp##c.(min_te_1 min_te_2)##i.PROP_AREA_PARKLAND_cat year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==1) ci saving(nn1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==2) ci saving(nn2, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==3) ci saving(nn3, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(PROP_AREA_PARKLAND_cat==1) ci saving(nn1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(PROP_AREA_PARKLAND_cat==2) ci saving(nn2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(PROP_AREA_PARKLAND_cat==3) ci saving(nn3, replace)
 
 use "nn1.dta", clear
 gen PROP_AREA_PARKLAND_cat=1
@@ -2715,9 +2715,9 @@ fracgen max_temp -1 -1
 fracgen min_temp 0 0
 
 logit fuel_poor_lihc c.max_temp##c.(min_te_1 min_te_2)##i.PROP_AREA_PARKLAND_cat year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==1) ci saving(oo1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==2) ci saving(oo2, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==3) ci saving(oo3, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(PROP_AREA_PARKLAND_cat==1) ci saving(oo1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(PROP_AREA_PARKLAND_cat==2) ci saving(oo2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(PROP_AREA_PARKLAND_cat==3) ci saving(oo3, replace)
 
 use "oo1.dta", clear
 gen PROP_AREA_PARKLAND_cat=1
@@ -2748,9 +2748,9 @@ fracgen max_temp -.5 -.5
 fracgen min_temp 1
 
 logit bills_unable c.min_temp##c.(max_te_1 max_te_2)##i.PROP_AREA_PARKLAND_cat year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==1) ci saving(pp1, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==2) ci saving(pp2, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(PROP_AREA_PARKLAND_cat==3) ci saving(pp3, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(PROP_AREA_PARKLAND_cat==1) ci saving(pp1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(PROP_AREA_PARKLAND_cat==2) ci saving(pp2, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(PROP_AREA_PARKLAND_cat==3) ci saving(pp3, replace)
 
 use "pp1.dta", clear
 gen PROP_AREA_PARKLAND_cat=1
@@ -2994,9 +2994,9 @@ fracgen max_temp 1
 fracgen min_temp 3 3
 
 regress propfuelpay_eq_p c.max_temp##c.(min_te_1 min_te_2)##i.renewable_area_rate_cat year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==1) ci saving(yy1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==2) ci saving(yy2, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==3) ci saving(yy3, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(renewable_area_rate_cat==1) ci saving(yy1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(renewable_area_rate_cat==2) ci saving(yy2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(renewable_area_rate_cat==3) ci saving(yy3, replace)
 
 use "yy1.dta", clear
 gen renewable_area_rate_cat=1
@@ -3025,9 +3025,9 @@ fracgen max_temp 1
 fracgen min_temp 3 3
 
 logit fuel10_eq c.max_temp##c.(min_te_1 min_te_2)##i.renewable_area_rate_cat year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==1) ci saving(zz1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==2) ci saving(zz2, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==3) ci saving(zz3, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(renewable_area_rate_cat==1) ci saving(zz1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(renewable_area_rate_cat==2) ci saving(zz2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(renewable_area_rate_cat==3) ci saving(zz3, replace)
 
 use "zz1.dta", clear
 gen renewable_area_rate_cat=1
@@ -3054,9 +3054,9 @@ fracgen max_temp -1 -1
 fracgen min_temp 0 0
 
 logit fuel_poor_lihc c.max_temp##c.(min_te_1 min_te_2)##i.renewable_area_rate_cat year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==1) ci saving(ab1, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==2) ci saving(ab2, replace)
-marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==3) ci saving(ab3, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(renewable_area_rate_cat==1) ci saving(ab1, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(renewable_area_rate_cat==2) ci saving(ab2, replace)
+marginscontplot max_temp min_temp (min_te_1 min_te_2), at1(22(2)32) at2(6(2)16) at(renewable_area_rate_cat==3) ci saving(ab3, replace)
 
 use "ab1.dta", clear
 gen renewable_area_rate_cat=1
@@ -3084,9 +3084,9 @@ fracgen max_temp -.5 -.5
 fracgen min_temp 1
 
 logit bills_unable c.min_temp##c.(max_te_1 max_te_2)##i.renewable_area_rate_cat year_2-year_17  , vce (cluster ID)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==1) ci saving(ac1, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==2) ci saving(ac2, replace)
-marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)36) at2(4(2)16) at(renewable_area_rate_cat==3) ci saving(ac3, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(renewable_area_rate_cat==1) ci saving(ac1, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(renewable_area_rate_cat==2) ci saving(ac2, replace)
+marginscontplot max_temp (max_te_1 max_te_2) min_temp, at1(22(2)32) at2(6(2)16) at(renewable_area_rate_cat==3) ci saving(ac3, replace)
 
 use "ac1.dta", clear
 gen renewable_area_rate_cat=1
