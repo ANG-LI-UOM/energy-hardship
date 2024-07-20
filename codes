@@ -324,6 +324,7 @@ est sto model28
 
 		
 ******************* stratification heatmap *****************
+///////////// climate zones ////////////
 use "energy_poverty.dta", clear
 //mfpigen,  linadj(year_2-year_17 ): regress propfuelpay_eq_p  min_temp max_temp , vce (cluster ID)
 fracgen max_temp 1
@@ -355,7 +356,7 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.06) by(NCCClimateZone2) saving("climate1.gph", replace)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.06) by(NCCClimateZone2) saving("climate1.gph", replace)
 
 
 		
@@ -390,11 +391,10 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 		
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(NCCClimateZone2) saving("climate2.gph", replace)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.2) by(NCCClimateZone2) saving("climate2.gph", replace)
 		
 		
 		
-/// 3		
 use "energy_poverty.dta", clear
 //mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit fuel_poor_lihc  min_temp max_temp , vce (cluster ID)
 fracgen max_temp -1 -1
@@ -426,10 +426,10 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(NCCClimateZone2) saving("climate3.gph", replace)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.2) by(NCCClimateZone2) saving("climate3.gph", replace)
 
 		
-/// 4		
+		
 use "energy_poverty.dta", clear
 //mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit bills_unable  min_temp max_temp , vce (cluster ID)
 fracgen max_temp -.5 -.5
@@ -461,15 +461,8 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(NCCClimateZone2) saving("climate4.gph", replace)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.2) by(NCCClimateZone2) saving("climate4.gph", replace)
 		
-
-
-
-
-
-
-
 
 
 use "energy_poverty.dta", clear
@@ -495,11 +488,10 @@ reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.06) by(NCCClimateZone2) saving("climate5.gph", replace) 
-
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.06) by(NCCClimateZone2) saving("climate5.gph", replace) 
 
 		
-/// 6
+
 use "energy_poverty.dta", clear
 fracgen HWD_mean 2 3
 fracgen CWD_mean 3 3
@@ -523,10 +515,9 @@ reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate6.gph", replace) 
-
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate6.gph", replace) 
+	
 		
-/// 7		
 use "energy_poverty.dta", clear
 fracgen HWD_mean 2 2
 fracgen CWD_mean 1
@@ -551,10 +542,10 @@ reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate7.gph", replace) 
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate7.gph", replace) 
 
 
-/// 8		
+		
 use "energy_poverty.dta", clear
 fracgen HWD_mean 1
 fracgen CWD_mean -2
@@ -578,16 +569,10 @@ reshape long _margin _ci_lb _ci_ub , i(i NCCClimateZone2) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate8.gph", replace) 
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate8.gph", replace) 
 				
 		
-		
-		
-		
-		
-		
-		
-/// 9		
+			
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -613,14 +598,11 @@ replace j=1 if j==2
 replace j=2 if j==3
 replace j=3 if j==4
 replace j=4 if j==5
-
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.06) by(NCCClimateZone2) saving("climate9.gph", replace) 
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.06) by(NCCClimateZone2) saving("climate9.gph", replace) 
 
-
-
-/// 10		
+		
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -648,10 +630,10 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate10.gph", replace) 
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate10.gph", replace) 
 		
 
-/// 11		
+	
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -679,11 +661,10 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate11.gph", replace) 
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate11.gph", replace) 
 
 
-
-/// 12		
+		
 use "energy_poverty.dta", clear
 fracgen HWN 2 3
 fracgen CWN 3 3
@@ -711,10 +692,11 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate12.gph", replace) 
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.14) by(NCCClimateZone2) saving("climate12.gph", replace) 
 		
 
-		
+
+///////////// household type ////////////
 use "energy_poverty.dta", clear
 //mfpigen,  linadj(year_2-year_17 ): regress propfuelpay_eq_p  min_temp max_temp , vce (cluster ID)
 fracgen max_temp 1
@@ -749,11 +731,10 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.06) by(HH_struc2) saving("hh1.gph", replace)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.06) by(HH_struc2) saving("hh1.gph", replace)
 
 
-
-/// 2		
+		
 use "energy_poverty.dta", clear
 //mfpigen,  linadj(year_2-year_17): logit fuel10_eq  min_temp max_temp , vce (cluster ID)
 fracgen max_temp 1
@@ -788,11 +769,10 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 		
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(HH_struc2) saving("hh2.gph", replace)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.2) by(HH_struc2) saving("hh2.gph", replace)
 		
 		
-		
-/// 3		
+			
 use "energy_poverty.dta", clear
 //mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit fuel_poor_lihc  min_temp max_temp , vce (cluster ID)
 fracgen max_temp -1 -1
@@ -827,10 +807,10 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(HH_struc2) saving("hh3.gph", replace)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.2) by(HH_struc2) saving("hh3.gph", replace)
 
 		
-/// 4		
+		
 use "energy_poverty.dta", clear
 //mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit bills_unable  min_temp max_temp , vce (cluster ID)
 fracgen max_temp -.5 -.5
@@ -865,19 +845,10 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.2) by(HH_struc2) saving("hh4.gph", replace)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.2) by(HH_struc2) saving("hh4.gph", replace)
 		
 
 
-
-
-
-
-
-
-
-
-/// 5
 use "energy_poverty.dta", clear
 fracgen HWD_mean 1
 fracgen CWD_mean 3 3
@@ -904,11 +875,9 @@ reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.06) by(HH_struc2) saving("hh5.gph", replace) 
-
-
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.06) by(HH_struc2) saving("hh5.gph", replace) 
 		
-/// 6
+
 use "energy_poverty.dta", clear
 fracgen HWD_mean 2 3
 fracgen CWD_mean 3 3
@@ -935,10 +904,9 @@ reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh6.gph", replace) 
-
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh6.gph", replace) 
+	
 		
-/// 7		
 use "energy_poverty.dta", clear
 fracgen HWD_mean 2 2
 fracgen CWD_mean 1
@@ -966,10 +934,9 @@ reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh7.gph", replace)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh7.gph", replace)
 
-
-/// 8		
+	
 use "energy_poverty.dta", clear
 fracgen HWD_mean 1
 fracgen CWD_mean -2
@@ -996,16 +963,9 @@ reshape long _margin _ci_lb _ci_ub , i(i HH_struc2) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh8.gph", replace) 
-				
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh8.gph", replace) 
+					
 		
-		
-		
-		
-		
-		
-		
-/// 9		
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -1034,14 +994,12 @@ replace j=1 if j==2
 replace j=2 if j==3
 replace j=3 if j==4
 replace j=4 if j==5
-
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.06) by(HH_struc2) saving("hh9.gph", replace)
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.06) by(HH_struc2) saving("hh9.gph", replace)
 
 
-
-/// 10		
+	
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -1072,10 +1030,9 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh10.gph", replace) 
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh10.gph", replace) 
 		
-
-/// 11		
+		
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -1106,11 +1063,10 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh11.gph", replace) 
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh11.gph", replace) 
 
 
-
-/// 12		
+		
 use "energy_poverty.dta", clear
 fracgen HWN 2 3
 fracgen CWN 3 3
@@ -1141,14 +1097,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh12.gph", replace) 
-
-
-
-
-
-
-
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.14) by(HH_struc2) saving("hh12.gph", replace) 
 
 
 
@@ -1156,7 +1105,6 @@ heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(HH_struc2) saving
 
 
 //////////////// age group ////////////////
-
 use "energy_poverty.dta", clear
 //mfpigen,  linadj(year_2-year_17 ): regress propfuelpay_eq_p  min_temp max_temp , vce (cluster ID)
 fracgen max_temp 1
@@ -1197,11 +1145,10 @@ label var _margin "Proportion of energy expense"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.06) by(AgeC3)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.06) by(AgeC3)
 
 
-
-/// 2		
+		
 use "energy_poverty.dta", clear
 //mfpigen,  linadj(year_2-year_17): logit fuel10_eq  min_temp max_temp , vce (cluster ID)
 fracgen max_temp 1
@@ -1242,11 +1189,10 @@ label var _margin "Risk of >10% energy expense"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(AgeC3)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(AgeC3)
 
-
+	
 		
-/// 3		
 use "energy_poverty.dta", clear
 //mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit fuel_poor_lihc  min_temp max_temp , vce (cluster ID)
 fracgen max_temp -1 -1
@@ -1287,10 +1233,10 @@ label var _margin "Risk of LIHC"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(AgeC3) saving("age_3.gph", replace)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(AgeC3) saving("age_3.gph", replace)
 
 		
-/// 4		
+		
 use "energy_poverty.dta", clear
 //mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit bills_unable  min_temp max_temp , vce (cluster ID)
 fracgen max_temp -.5 -.5
@@ -1331,11 +1277,11 @@ label var _margin "Risk of utility bill arrear"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(AgeC3)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(AgeC3)
 
 
 
-/// 5
+
 use "energy_poverty.dta", clear
 fracgen HWD_mean 1
 fracgen CWD_mean 3 3
@@ -1368,10 +1314,10 @@ label var _margin "Proportion of energy expense"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.06) by(AgeC3)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.06) by(AgeC3)
 
 		
-/// 6
+
 use "energy_poverty.dta", clear
 fracgen HWD_mean 2 3
 fracgen CWD_mean 3 3
@@ -1404,10 +1350,10 @@ label var _margin "Risk of >10% energy expense"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(AgeC3)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(AgeC3)
 		
 		
-/// 7		
+		
 use "energy_poverty.dta", clear
 fracgen HWD_mean 2 2
 fracgen CWD_mean 1
@@ -1441,10 +1387,10 @@ label var _margin "Risk of LIHC"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(AgeC3)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(AgeC3)
 
 		
-/// 8		
+		
 use "energy_poverty.dta", clear
 fracgen HWD_mean 1
 fracgen CWD_mean -2
@@ -1477,10 +1423,10 @@ label var _margin "Risk of utility bill arrear"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(AgeC3)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(AgeC3)
 		
 		
-/// 9		
+		
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -1517,11 +1463,11 @@ label var _margin "Proportion of energy expense"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.06) by(AgeC3)
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.06) by(AgeC3)
 
 
 
-/// 10
+
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -1558,10 +1504,10 @@ label var _margin "Risk of >10% energy expense"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(AgeC3)
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.14) by(AgeC3)
 		
 		
-/// 11		
+		
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -1598,10 +1544,10 @@ label var _margin "Risk of LIHC"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(AgeC3)
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.14) by(AgeC3)
 
 		
-/// 12	
+	
 use "energy_poverty.dta", clear
 fracgen HWN 2 3
 fracgen CWN 3 3
@@ -1638,15 +1584,14 @@ label var _margin "Risk of utility bill arrear"
 label define AgeC3 1 "Age<30" 2 "Age30-39" 3 "Age40-49"  4  "Age50-59" 5 "Age>=60"
 label value AgeC3 AgeC3
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(AgeC3)
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.14) by(AgeC3)
 	
 
 
 
 
-**# Bookmark #7
+
 //////////////// dwelling quality ////////////////
-/// 1
 use "energy_poverty.dta", clear
 fracgen max_temp 1
 fracgen min_temp 3 3
@@ -1677,10 +1622,10 @@ label var _margin "Proportion of energy expense"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.06) by(home_satisfaction_dis) saving("dwel1.gph", replace)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.06) by(home_satisfaction_dis) saving("dwel1.gph", replace)
 
 
-/// 2		
+		
 use "energy_poverty.dta", clear
 fracgen max_temp 1
 fracgen min_temp 3 3
@@ -1711,10 +1656,10 @@ label var _margin "Risk of >10% energy expense"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(home_satisfaction_dis) saving("dwel2.gph", replace)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(home_satisfaction_dis) saving("dwel2.gph", replace)
 
 		
-/// 3		
+		
 use "energy_poverty.dta", clear
 fracgen max_temp -1 -1
 fracgen min_temp 0 0
@@ -1745,11 +1690,11 @@ label var _margin "Risk of LIHC"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 		
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(home_satisfaction_dis) saving("dwel3.gph", replace)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(home_satisfaction_dis) saving("dwel3.gph", replace)
 
 
 
-/// 4		
+		
 use "energy_poverty.dta", clear
 fracgen max_temp -.5 -.5
 fracgen min_temp 1
@@ -1780,11 +1725,11 @@ label var _margin "Risk of utility bill arrear"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 		
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(home_satisfaction_dis) saving("dwel4.gph", replace)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(home_satisfaction_dis) saving("dwel4.gph", replace)
 		
 		
 		
-/// 5
+
 use "energy_poverty.dta", clear
 fracgen HWD_mean 1
 fracgen CWD_mean 3 3
@@ -1808,10 +1753,10 @@ label var _margin "Proportion of energy expense"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.06) by(home_satisfaction_dis) saving("dwel5.gph", replace) 
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.002)0.06) by(home_satisfaction_dis) saving("dwel5.gph", replace) 
 
 		
-/// 6
+
 use "energy_poverty.dta", clear
 fracgen HWD_mean 2 3
 fracgen CWD_mean 3 3
@@ -1835,11 +1780,11 @@ label var _margin "Risk of >10% energy expense"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.14) by(home_satisfaction_dis) saving("dwel6.gph", replace) 
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.002)0.14) by(home_satisfaction_dis) saving("dwel6.gph", replace) 
 
 
 		
-/// 7		
+		
 use "energy_poverty.dta", clear
 fracgen HWD_mean 2 2
 fracgen CWD_mean 1
@@ -1863,11 +1808,11 @@ label var _margin "Risk of LIHC"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis) saving("dwel7.gph", replace) 
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(home_satisfaction_dis) saving("dwel7.gph", replace) 
 
 
 		
-/// 8		
+		
 use "energy_poverty.dta", clear
 fracgen HWD_mean 1
 fracgen CWD_mean -2
@@ -1891,11 +1836,11 @@ label var _margin "Risk of utility bill arrear"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis) saving("dwel8.gph", replace) 
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(home_satisfaction_dis) saving("dwel8.gph", replace) 
 		
 		
 		
-/// 9		
+		
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -1923,10 +1868,10 @@ label var _margin "Proportion of energy expense"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.06) by(home_satisfaction_dis) saving("dwel9.gph", replace) 
+heatplot _margin HWN CWN , cuts(0.02(0.005)0.06) by(home_satisfaction_dis) saving("dwel9.gph", replace) 
 
 		
-/// 10
+
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -1954,10 +1899,10 @@ label var _margin "Risk of >10% energy expense"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
+heatplot _margin HWN CWN , cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 		
 		
-/// 11		
+	
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -1985,10 +1930,10 @@ label var _margin "Risk of LIHC"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
+heatplot _margin HWN CWN , cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 		
 
-/// 12
+
 use "energy_poverty.dta", clear
 fracgen HWN 2 3
 fracgen CWN 3 3
@@ -2016,15 +1961,10 @@ label var _margin "Risk of utility bill arrear"
 label define home_satisfaction_dis 1 "Poor quality housing" 0 "Good quality housing"
 label value home_satisfaction_dis home_satisfaction_dis
 		
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
+heatplot _margin HWN CWN , cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 		
 
 		
-
-
-
-
-
 
 
 
@@ -2052,10 +1992,10 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.06) by(home_satisfaction_dis)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.06) by(home_satisfaction_dis)
 
 
-/// 2		
+		
 use "energy_poverty.dta", clear
 fracgen max_temp 1
 fracgen min_temp 3 3
@@ -2080,10 +2020,10 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 
 		
-/// 3		
+		
 use "energy_poverty.dta", clear
 fracgen max_temp -1 -1
 fracgen min_temp 0 0
@@ -2108,11 +2048,11 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 		
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 
 
 
-/// 4		
+		
 use "energy_poverty.dta", clear
 fracgen max_temp -.5 -.5
 fracgen min_temp 1
@@ -2137,11 +2077,11 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 		
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 		
 		
 		
-/// 5
+
 use "energy_poverty.dta", clear
 fracgen HWD_mean 1
 fracgen CWD_mean 3 3
@@ -2159,10 +2099,10 @@ reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.06) by(home_satisfaction_dis)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.002)0.06) by(home_satisfaction_dis)
 
 		
-/// 6
+
 use "energy_poverty.dta", clear
 fracgen HWD_mean 2 3
 fracgen CWD_mean 3 3
@@ -2180,11 +2120,11 @@ reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.14) by(home_satisfaction_dis)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.002)0.14) by(home_satisfaction_dis)
 
 
 		
-/// 7		
+		
 use "energy_poverty.dta", clear
 fracgen HWD_mean 2 2
 fracgen CWD_mean 1
@@ -2202,11 +2142,11 @@ reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 
 
 		
-/// 8		
+		
 use "energy_poverty.dta", clear
 fracgen HWD_mean 1
 fracgen CWD_mean -2
@@ -2224,11 +2164,11 @@ reshape long _margin _ci_lb _ci_ub , i(i home_satisfaction_dis) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 		
 		
 		
-/// 9		
+		
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -2250,10 +2190,10 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.06) by(home_satisfaction_dis)
+heatplot _margin HWN CWN , cuts(0.02(0.005)0.06) by(home_satisfaction_dis)
 
 		
-/// 10
+
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -2275,10 +2215,10 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
+heatplot _margin HWN CWN , cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 		
 		
-/// 11		
+		
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -2300,10 +2240,10 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis) 
+heatplot _margin HWN CWN , cuts(0.02(0.005)0.14) by(home_satisfaction_dis) 
 		
 
-/// 12
+
 use "energy_poverty.dta", clear
 fracgen HWN 2 3
 fracgen CWN 3 3
@@ -2325,7 +2265,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
+heatplot _margin HWN CWN , cuts(0.02(0.005)0.14) by(home_satisfaction_dis)
 		
 		
 		
@@ -2334,7 +2274,7 @@ heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(home_satisfactio
 		
 		
 		
-		
+///////////// housing tenure ////////////		
 use "energy_poverty.dta", clear
 fracgen max_temp 1
 fracgen min_temp 3 3
@@ -2359,10 +2299,10 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.06) by(owner)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.06) by(owner)
 
 
-/// 2		
+		
 use "energy_poverty.dta", clear
 fracgen max_temp 1
 fracgen min_temp 3 3
@@ -2387,10 +2327,10 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(owner)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(owner)
 		
 
-/// 3
+
 use "energy_poverty.dta", clear
 fracgen max_temp -1 -1
 fracgen min_temp 0 0
@@ -2415,10 +2355,10 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 		
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(owner)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(owner)
 
 
-/// 4		
+		
 use "energy_poverty.dta", clear
 fracgen max_temp -.5 -.5
 fracgen min_temp 1
@@ -2443,11 +2383,11 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 		
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14)
 		
 
 
-/// 5
+
 use "energy_poverty.dta", clear
 fracgen HWD_mean 1
 fracgen CWD_mean 3 3
@@ -2465,11 +2405,11 @@ reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.002)0.06) by(owner)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.002)0.06) by(owner)
 
 
 
-/// 6		
+		
 use "energy_poverty.dta", clear
 fracgen HWD_mean 2 3
 fracgen CWD_mean 3 3
@@ -2487,11 +2427,11 @@ reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(owner)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(owner)
 
 
 		
-/// 7		
+		
 use "energy_poverty.dta", clear
 fracgen HWD_mean 2 2
 fracgen CWD_mean 1
@@ -2509,10 +2449,10 @@ reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(owner)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(owner)
 
 		
-/// 8		
+		
 use "energy_poverty.dta", clear
 fracgen HWD_mean 1
 fracgen CWD_mean -2
@@ -2530,12 +2470,12 @@ reshape long _margin _ci_lb _ci_ub , i(i owner) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(owner)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(owner)
 		
 		
 		
 		
-/// 9				
+				
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -2557,11 +2497,11 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.002)0.06) by(owner)
+heatplot _margin HWN CWN , cuts(0.02(0.002)0.06) by(owner)
 
 
 		
-/// 10
+
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -2583,10 +2523,10 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(owner)
+heatplot _margin HWN CWN , cuts(0.02(0.005)0.14) by(owner)
 		
-		
-/// 11		
+
+
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -2608,11 +2548,10 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN , discrete(1) cuts(0.02(0.005)0.14) by(owner)
+heatplot _margin HWN CWN , cuts(0.02(0.005)0.14) by(owner)
 
 
-		
-/// 12	
+			
 use "energy_poverty.dta", clear
 fracgen HWN 2 3
 fracgen CWN 3 3
@@ -2634,17 +2573,14 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(owner)
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.14) by(owner)
 
 		
 		
 		
-		
 
 
-
-
-
+///////////// greenspace ////////////
 use "energy_poverty.dta", clear
 //mfpigen,  linadj(year_2-year_17 ): regress propfuelpay_eq_p  min_temp max_temp , vce (cluster ID)
 fracgen max_temp 1
@@ -2673,11 +2609,11 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.06) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.06) by(PROP_AREA_PARKLAND_cat)
 	
 	
 	
-/// 2		
+		
 use "energy_poverty.dta", clear
 //mfpigen,  linadj(year_2-year_17): logit fuel10_eq  min_temp max_temp , vce (cluster ID)
 fracgen max_temp 1
@@ -2706,9 +2642,9 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat) 
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat) 
 		
-/// 3		
+		
 use "energy_poverty.dta", clear
 //mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit fuel_poor_lihc  min_temp max_temp , vce (cluster ID)
 fracgen max_temp -1 -1
@@ -2737,11 +2673,11 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
 
 
 		
-/// 4		
+		
 use "energy_poverty.dta", clear
 //mfpigen, fplot(3 6 9) against(max_temp) linadj(year_2-year_17): logit bills_unable  min_temp max_temp , vce (cluster ID)
 fracgen max_temp -.5 -.5
@@ -2770,10 +2706,10 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 	
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
 
 
-/// 5
+
 use "energy_poverty.dta", clear
 fracgen HWD_mean 1
 fracgen CWD_mean 3 3
@@ -2794,10 +2730,10 @@ reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.06) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.06) by(PROP_AREA_PARKLAND_cat)
 		
 		
-/// 6
+
 use "energy_poverty.dta", clear
 fracgen HWD_mean 2 3
 fracgen CWD_mean 3 3
@@ -2818,10 +2754,10 @@ reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
 
 		
-/// 7		
+		
 use "energy_poverty.dta", clear
 fracgen HWD_mean 2 2
 fracgen CWD_mean 1
@@ -2843,11 +2779,11 @@ reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
 
 
 		
-/// 8		
+		
 use "energy_poverty.dta", clear
 fracgen HWD_mean 1
 fracgen CWD_mean -2
@@ -2868,10 +2804,10 @@ reshape long _margin _ci_lb _ci_ub , i(i PROP_AREA_PARKLAND_cat) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
 		
 		
-/// 9				
+				
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -2896,10 +2832,10 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.06) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.06) by(PROP_AREA_PARKLAND_cat)
 		
 
-/// 10		
+		
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -2924,10 +2860,9 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
 		
-		
-/// 11		
+
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -2952,11 +2887,11 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
 
 
 		
-/// 12	
+	
 use "energy_poverty.dta", clear
 fracgen HWN 2 3
 fracgen CWN 3 3
@@ -2981,14 +2916,12 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.14) by(PROP_AREA_PARKLAND_cat)
 
 
 
 
-
-
-
+///////////// renewable energy installation ////////////
 use "energy_poverty.dta", clear
 fracgen max_temp 1
 fracgen min_temp 3 3
@@ -3016,10 +2949,10 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.06) by(renewable_area_rate_cat)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.06) by(renewable_area_rate_cat)
 
 
-/// 2		
+		
 use "energy_poverty.dta", clear
 fracgen max_temp 1
 fracgen min_temp 3 3
@@ -3047,7 +2980,7 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
 				
 use "energy_poverty.dta", clear
 fracgen max_temp -1 -1
@@ -3076,7 +3009,7 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
 
 				
 use "energy_poverty.dta", clear
@@ -3106,7 +3039,7 @@ replace j=17 if j==7
 replace j=19 if j==8
 rename j min_temp
 
-heatplot _margin max_temp min_temp, discrete(2) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
+heatplot _margin max_temp min_temp, cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
 
 				
 use "energy_poverty.dta", clear
@@ -3129,7 +3062,7 @@ reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.06) by(renewable_area_rate_cat)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.06) by(renewable_area_rate_cat)
 		
 		
 use "energy_poverty.dta", clear
@@ -3152,7 +3085,7 @@ reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
 
 			
 use "energy_poverty.dta", clear
@@ -3175,7 +3108,7 @@ reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
 replace j=j+2
 rename j CWD_mean
 		
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
 		
 				
 use "energy_poverty.dta", clear
@@ -3198,7 +3131,7 @@ reshape long _margin _ci_lb _ci_ub , i(i renewable_area_rate_cat) j(j)
 replace j=j+2
 rename j CWD_mean
 
-heatplot _margin HWD_mean CWD_mean, discrete(1) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
+heatplot _margin HWD_mean CWD_mean, cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
 		
 						
 use "energy_poverty.dta", clear
@@ -3228,10 +3161,10 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.06) by(renewable_area_rate_cat)
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.06) by(renewable_area_rate_cat)
 
 
-/// 10		
+		
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -3256,10 +3189,10 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
 		
 		
-/// 11		
+	
 use "energy_poverty.dta", clear
 fracgen HWN 2 2
 fracgen CWN 1
@@ -3284,7 +3217,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
 
 			
 use "energy_poverty.dta", clear
@@ -3311,7 +3244,7 @@ replace j=3 if j==4
 replace j=4 if j==5
 rename j CWN
 		
-heatplot _margin HWN CWN, discrete(1) cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
+heatplot _margin HWN CWN, cuts(0.02(0.005)0.14) by(renewable_area_rate_cat)
 
 
 
